@@ -1,14 +1,17 @@
 package com.ml.stock;
-import java.util.List;
+import java.util.Set;
+
+import org.springframework.data.annotation.Id;
 
 
 public class Stocks {
+	@Id
 	private String stockCode;
-	private List<Stock> stocks;
+	private Set<Stock> stocks;
 	
 	public Stocks() {}
 	
-	public Stocks(String stockCode, List<Stock> stocks) {
+	public Stocks(String stockCode, Set<Stock> stocks) {
 		super();
 		this.stockCode = stockCode;
 		this.stocks = stocks;
@@ -20,10 +23,10 @@ public class Stocks {
 	public void setStockCode(String stockCode) {
 		this.stockCode = stockCode;
 	}
-	public List<Stock> getStocks() {
+	public Set<Stock> getStocks() {
 		return stocks;
 	}
-	public void setStocks(List<Stock> stocks) {
+	public void setStocks(Set<Stock> stocks) {
 		this.stocks = stocks;
 	}
 	@Override

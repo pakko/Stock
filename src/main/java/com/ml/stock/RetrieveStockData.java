@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
 import com.ml.util.DateSplit;
@@ -21,12 +23,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class RetrieveStockData {
 
 	public static void main(String[] argx) throws Exception {
 		String stockCode = "zs_000001";
-		String beginDate = "1900-01-01";
+		String beginDate = "2013-01-01";
 		String endDate = "2013-09-20";
 		String periodMethod = "d";
 		String resultMethod = "js";
@@ -41,7 +45,7 @@ public class RetrieveStockData {
 		Mongo mongo = new Mongo("localhost", 27017);
 		MongoTemplate mongoTemplate = new MongoTemplate(mongo, "stock");
 		MongoDB mongodb = new MongoDB(mongoTemplate);
-		
+
 		RetrieveStockData rsd = new RetrieveStockData();
 		
 		// get split date list
@@ -74,11 +78,19 @@ public class RetrieveStockData {
 				List<List<String>> lists = objectMapper.readValue(result, List.class);
 				
 				// translate lists to object
-				List<Stock> stockList = listToResultBean(lists);
+				Set<Stock> stockList = listToResultBean(lists);
 				Stocks stocks = new Stocks(stockCode, stockList);
 
 				// save to db
+				
+				Query query = new Query();
+				query.addCriteria(Criteria.where("stockCode").is(stockCode));
+				List<Stocks> results = mongodb.find(query, Stocks.class, "stocks");
+				if(results != null && results.size() > 0) {
+					stockList.addAll(results.get(0).getStocks());
+				}
 				mongodb.save(stocks, "stocks");
+				
 			} catch (ParseException e) {
 				System.err.println("Parse, Stock code:" + stockCode + "---" + e.getMessage());
 			} catch (IOException e) {
@@ -99,10 +111,10 @@ public class RetrieveStockData {
 		return result;
 	}
 
-	private List<Stock> listToResultBean(List<List<String>> lists)
+	private Set<Stock> listToResultBean(List<List<String>> lists)
 			throws ParseException {
 		DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		List<Stock> stockList = new ArrayList<Stock>(lists.size());
+		Set<Stock> stockList = new TreeSet<Stock>();
 		for (List<String> list : lists) {
 			Date date = format.parse(list.get(0).toString());
 			double openSpan = Double.parseDouble(list.get(1).toString());

@@ -14,13 +14,13 @@ public class DateSplit {
 		Date endDate = sdf.parse(endDateStr);
 		
 		if (!startDate.before(endDate))
-			throw new Exception("开始时间应该在结束时间之后");
+			throw new Exception("Begin date should after end date");
 		
 		long days = getDaysBetween(startDate, endDate);
-		System.out.println(days);
+		System.out.println("days: " + days);
 		
 		int step = (int) Math.ceil(days / (SPLIT_DAYS * 1.0));
-		System.out.println(step);
+		System.out.println("step: " + step);
 
 		Date newStartDate = (Date) startDate.clone();
 		Date newEndDate = (Date) endDate.clone();

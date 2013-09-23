@@ -1,9 +1,11 @@
 package com.ml.stock;
 import java.util.Date;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 
-public class Stock {
 
+public class Stock implements Comparable {
+	@Indexed(unique = true)
 	private Date date;
 	private double openSpan;
 	private double closeSpan;
@@ -122,6 +124,12 @@ public class Stock {
 
 	public void setChangeRate(double changeRate) {
 		this.changeRate = changeRate;
+	}
+
+	@Override
+	public int compareTo(Object o) {
+		Stock stock = (Stock) o;
+		return date.getTime() > stock.date.getTime() ? 1 : (date.getTime() == stock.date.getTime() ? 0 : -1);
 	}
 	
 }

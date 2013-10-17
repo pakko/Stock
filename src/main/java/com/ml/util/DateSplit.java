@@ -5,11 +5,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class DateSplit {
-	private final static int SPLIT_DAYS = 100;
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
 	public static List<String[]> split(String startDateStr, String endDateStr)
 			throws Exception {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		Date startDate = sdf.parse(startDateStr);
 		Date endDate = sdf.parse(endDateStr);
 		
@@ -19,7 +18,7 @@ public class DateSplit {
 		long days = getDaysBetween(startDate, endDate);
 		System.out.println("days: " + days);
 		
-		int step = (int) Math.ceil(days / (SPLIT_DAYS * 1.0));
+		int step = (int) Math.ceil(days / (Constants.splitDays * 1.0));
 		System.out.println("step: " + step);
 
 		Date newStartDate = (Date) startDate.clone();
@@ -40,7 +39,7 @@ public class DateSplit {
 	private static Date getBeforeDate(Date startDate, Date endDate) {
 		Calendar now = Calendar.getInstance();
 		now.setTime(endDate);
-		now.set(Calendar.DATE, now.get(Calendar.DATE) - SPLIT_DAYS);
+		now.set(Calendar.DATE, now.get(Calendar.DATE) - Constants.splitDays);
 		if(now.getTime().getTime() < startDate.getTime()) {
 			return startDate;
 		}
@@ -56,7 +55,7 @@ public class DateSplit {
 	
 	public static void main(String[] args) throws ParseException {
 		try {
-			List<String[]> lists = split("2012-11-01", "2012-12-01");
+			List<String[]> lists = split("2013-01-01", "2013-10-16");
 			if (!lists.isEmpty()) {
 				for (String[] dates : lists) {
 					System.out.println("start date: " + dates[0] + ", end date: " + dates[1]);

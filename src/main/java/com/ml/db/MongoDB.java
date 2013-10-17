@@ -1,131 +1,129 @@
 package com.ml.db;
 
-import java.io.File;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
-import org.springframework.data.authentication.UserCredentials;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapreduce.GroupBy;
+import org.springframework.data.mongodb.core.mapreduce.GroupByResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
-import com.ml.stock.RetrieveStockData;
-import com.ml.stock.Stocks;
-import com.ml.util.DateSplit;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 
-public class MongoDB {
+public class MongoDB implements IBaseDB {
 
 	MongoTemplate mongoTemplate;
 	
 	public MongoDB(Properties props) {
 		try {
-			String host = props.getProperty("host");
-			int port = Integer.valueOf(props.getProperty("port"));
-			String db = props.getProperty("database");
-			String user = props.getProperty("user");
-			String password = props.getProperty("password");
+			String host = props.getProperty("mongo.host");
+			int port = Integer.valueOf(props.getProperty("mongo.port"));
+			String db = props.getProperty("mongo.db");
 			
-			UserCredentials userCredentials = new UserCredentials(user, password);
 			Mongo mongo = new Mongo(host, port);
-			mongoTemplate = new MongoTemplate(mongo, db, userCredentials);
+			mongoTemplate = new MongoTemplate(mongo, db);
 			
+			
+	        
 		} catch (UnknownHostException e) {
 			System.out.println(e.toString());
 		} catch (MongoException e) {
 			System.out.println(e.toString());
 		}
 	}
-	
-	public static void main(String[] argx) throws Exception {
-		// initial mongodb
-		Mongo mongo = new Mongo("localhost", 27017);
-		MongoTemplate mongoTemplate = new MongoTemplate(mongo, "stock");
-		MongoDB mongodb = new MongoDB(mongoTemplate);
-		Query query = new Query();
-		query.addCriteria(Criteria.where("stockCode").is("cn_600000"));
-		List<Stocks> results = mongodb.find(query, Stocks.class, "stocks");
-		System.out.println(results.size());
 
-		System.out.println(results.get(0).getStocks().size());
-	}
 	
 	public MongoDB(MongoTemplate mongoTemplate) {
 		this.mongoTemplate = mongoTemplate;
 	}
 
-	
+	@Override
 	public void save(Object entity) {
 		mongoTemplate.save(entity);
 	}
 
-	
+	@Override
 	public void save(Object entity, String collectionName) {
 		mongoTemplate.save(entity, collectionName);
 	}
-
-	public void insertAll(Collection<? extends Object> objectsToSave) {
-		mongoTemplate.insertAll(objectsToSave);
-	}
 	
+	@Override
+	public void insert(Collection<? extends Object> batchToSave, String collectionName) {
+		mongoTemplate.insert(batchToSave, collectionName);
+	}
+
+	@Override
 	public void update(Object entity) {
 		mongoTemplate.save(entity);
 	}
 
-	
+	@Override
 	public void update(Object entity, String collectionName) {
 		mongoTemplate.save(entity, collectionName);
 	}
 
-	
+	@Override
 	public void delete(Object entity) {
 		mongoTemplate.remove(entity);
 	}
 
-	
+	@Override
 	public void delete(Object entity, String collectionName) {
 		mongoTemplate.remove(entity, collectionName);
+		
+	}
+	
+	@Override
+	public void delete(Query query, String collectionName) {
+		mongoTemplate.remove(query, collectionName);
+	}
+	
+	@Override
+	public void drop(String collectionName) {
 		mongoTemplate.dropCollection(collectionName);
 	}
 
-	public void dropCollection(String collectionName) {
-		mongoTemplate.dropCollection(collectionName);
-	}
-	
+	@Override
 	public <T> List<T> find(Object query, Object entity) {
 		return mongoTemplate.find((Query)query, (Class<T>) entity);
 	}
 
-	
+	@Override
 	public <T> List<T> find(Object query, Object entity, String collectionName) {
 		return mongoTemplate.find((Query)query, (Class<T>) entity, collectionName);
 	}
 
-	
+	@Override
 	public <T> T findOne(Object query, Object entity) {
 		return mongoTemplate.findOne((Query)query, (Class<T>) entity);
 	}
 
-	
+	@Override
 	public <T> T findOne(Object query, Object entity, String collectionName) {
 		return mongoTemplate.findOne((Query)query, (Class<T>) entity, collectionName);
 	}
 
-	
+	@Override
 	public <T> List<T> findAll(Object entity) {
 		return mongoTemplate.findAll((Class<T>) entity);
 	}
 
-	
+	@Override
 	public <T> List<T> findAll(Object entity, String collectionName) {
 		return mongoTemplate.findAll((Class<T>) entity, collectionName);
 	}
-
 	
+	public <T> GroupByResults<T> group(Criteria criteria, String collectionName, GroupBy groupBy,
+			Object entity) {
+		return mongoTemplate.group(criteria, collectionName, groupBy, (Class<T>) entity);
+	}
+	
+
+	@Override
 	public long count(Object query, String collectionName) {
 		return mongoTemplate.count((Query) query, collectionName);
 	}
@@ -138,7 +136,6 @@ public class MongoDB {
 	public void setMongoTemplate(MongoTemplate mongoTemplate) {
 		this.mongoTemplate = mongoTemplate;
 	}
-	
 
 
 }

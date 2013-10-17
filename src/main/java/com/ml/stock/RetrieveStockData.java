@@ -1,50 +1,60 @@
 package com.ml.stock;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
+import com.ml.util.Constants;
 import com.ml.util.DateSplit;
-import com.mongodb.Mongo;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 public class RetrieveStockData {
-
-	public static void main(String[] argx) throws Exception {
+	private static DateFormat sdf;
+	static {
+		String pattern = "yyyy-MM-dd";
+		TimeZone timeZone = TimeZone.getTimeZone("GMT+8:00");
+		sdf = new SimpleDateFormat(pattern);
+		sdf.setTimeZone(timeZone);
+	}
+	
+	public static void main(String[] args) throws Exception {
 		String stockCode = "zs_000001";
 		String beginDate = "2013-01-01";
-		String endDate = "2013-09-20";
+		String endDate = "2013-10-16";
 		String periodMethod = "d";
 		String resultMethod = "js";
 
 		// stock codes
-		String corpCodesPath = RetrieveStockData.class.getClassLoader()
-				.getResource("").toString().substring(6) + "corp_codes.csv";
-		List<String> lines = FileUtils.readLines(new File(corpCodesPath));
+		List<String> lines = FileUtils.readLines(new File(Constants.corpCodesFile));
 		System.out.println("Corp code size: " + lines.size());
 
 		// initial mongodb
-		Mongo mongo = new Mongo("localhost", 27017);
-		MongoTemplate mongoTemplate = new MongoTemplate(mongo, "stock");
-		MongoDB mongodb = new MongoDB(mongoTemplate);
+		String confFile = Constants.defaultConfigFile;
+		if(args.length > 0) {
+			confFile = args[0];
+		}
+		Properties props = new Properties();
+		props.load(new FileInputStream(confFile));
+		MongoDB mongodb = new MongoDB(props);
 
 		RetrieveStockData rsd = new RetrieveStockData();
 		
@@ -53,53 +63,56 @@ public class RetrieveStockData {
 		if (!lists.isEmpty()) {
 			for (String[] dates : lists) {
 				System.out.println("start date: " + dates[0] + ", end date: " + dates[1]);
-				rsd.process(lines, mongodb, stockCode, dates[0], dates[1], periodMethod, resultMethod);
+				for (String line : lines) {
+					stockCode = "cn_" + line.split(",")[0];
+					rsd.process(mongodb, stockCode, dates[0], dates[1], periodMethod, resultMethod);
+				}
 			}
 		}
 	}
 	
-	public void process(List<String> lines, MongoDB mongodb,
-			String stockCode, String beginDate, String endDate, String periodMethod, String resultMethod) {
-		for (String line : lines) {
-			stockCode = "cn_" + line.split(",")[0];
-			String getUrl = "http://q.stock.sohu.com/app2/history.up?method=history"
-					+ "&code=" + stockCode
-					+ "&sd=" + beginDate
-					+ "&ed=" + endDate
-					+ "&t=" + periodMethod 
-					+ "&res=" + resultMethod;
-			try {
-				// get data and remove some tags
-				String result = downLoadPages(getUrl);
-				result = formatUrlResult(result);
+	public void process(MongoDB mongodb, String stockCode, String beginDate, 
+			String endDate, String periodMethod, String resultMethod) {
+		
+		String getUrl = "http://q.stock.sohu.com/app2/history.up?method=history"
+				+ "&code=" + stockCode
+				+ "&sd=" + beginDate
+				+ "&ed=" + endDate
+				+ "&t=" + periodMethod 
+				+ "&res=" + resultMethod;
+		try {
+			// get data and remove some tags
+			String result = downLoadPages(getUrl);
+			result = this.formatUrlResult(result);
 
-				// use jackson to translate string to json list
-				ObjectMapper objectMapper = new ObjectMapper();
-				List<List<String>> lists = objectMapper.readValue(result, List.class);
-				
-				// translate lists to object
-				Set<Stock> stockList = listToResultBean(lists);
-				Stocks stocks = new Stocks(stockCode, stockList);
+			// use jackson to translate string to json list
+			ObjectMapper objectMapper = new ObjectMapper();
+			List<List<String>> lists = objectMapper.readValue(result, List.class);
+			
+			// translate lists to object
+			Set<Stock> stockList = listToResultBean(lists);
 
-				// save to db
-				
-				Query query = new Query();
-				query.addCriteria(Criteria.where("stockCode").is(stockCode));
-				List<Stocks> results = mongodb.find(query, Stocks.class, "stocks");
-				if(results != null && results.size() > 0) {
-					stockList.addAll(results.get(0).getStocks());
-				}
-				mongodb.save(stocks, "stocks");
-				
-			} catch (ParseException e) {
-				System.err.println("Parse, Stock code:" + stockCode + "---" + e.getMessage());
-			} catch (IOException e) {
-				System.err.println("Download, Stock code:" + stockCode + "---" + e.getMessage());
-			}
-
+			// save to db
+			this.saveToDB(mongodb, stockCode, stockList);
+			
+		} catch (ParseException e) {
+			System.err.println("Parse, Stock code:" + stockCode + "---" + e.getMessage());
+		} catch (IOException e) {
+			System.err.println("Download, Stock code:" + stockCode + "---" + e.getMessage());
 		}
 	}
 
+	private void saveToDB(MongoDB mongodb, String stockCode, Set<Stock> stockList) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("stockCode").is(stockCode));
+		List<Stocks> results = mongodb.find(query, Stocks.class, Constants.stockCollectionName);
+		if(results != null && results.size() > 0) {
+			stockList.addAll(results.get(0).getStocks());
+		}
+		Stocks stocks = new Stocks(stockCode, stockList);
+		mongodb.save(stocks, Constants.stockCollectionName);
+	}
+	
 	private String formatUrlResult(String result) {
 		result = result.trim();
 		result = result.replace("\n", "");
@@ -113,10 +126,9 @@ public class RetrieveStockData {
 
 	private Set<Stock> listToResultBean(List<List<String>> lists)
 			throws ParseException {
-		DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		Set<Stock> stockList = new TreeSet<Stock>();
 		for (List<String> list : lists) {
-			Date date = format.parse(list.get(0).toString());
+			Date date = sdf.parse(list.get(0).toString());
 			double openSpan = Double.parseDouble(list.get(1).toString());
 			double closeSpan = Double.parseDouble(list.get(2).toString());
 			double upMount = Double.parseDouble(list.get(3).toString());

@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -26,67 +27,94 @@ public class SimpleModel implements Model {
 	 * 4.目前股价在在5日，10日，20日，30日均线附近，也就是说5日，10日，20日，30日的均价几乎相同，相差在5%以内
 	 * 
 	 */
-	private static SimpleDateFormat sdf;
-	static {
-		String pattern = "yyyy-MM-dd";
-		TimeZone timeZone = TimeZone.getTimeZone("GMT+8:00");
-		sdf = new SimpleDateFormat(pattern);
-		sdf.setTimeZone(timeZone);
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy,MM,dd");
+	
+	private MongoDB mongodb;
+	public SimpleModel(MongoDB mongodb) {
+		this.mongodb = mongodb;
+	}
+	/*
+	 * steps: 
+	 * 	1) 计算1年的所有100天的换手率及涨幅
+	 * 	2) start date的股价和5日，10日，20日，30日均价的比值
+	 */
+	public void calculateDaysOfHSL(String stockCode, Date startDate)
+			throws Exception {
+		Date endDate = getBeforeDate(startDate);
+		String startDateStr = getFormatDate(startDate);  
+		String endDateStr = getFormatDate(endDate);  
+		System.out.println(startDate + ",," + endDate);
+		GroupByResults<Stocks> result = getGroupByResult(stockCode, startDateStr, endDateStr);
+
+		Iterator<Stocks> it = result.iterator();
+		while(it.hasNext()) {
+			Stocks stocks = it.next();
+			System.out.println(stocks.getStockCode() + ", stocks size: " + stocks.getStocks().size());
+			double hsl = 0.0;
+			int totalSize = stocks.getStocks().size();
+			int index = 0;
+			Stock todayStock = null;
+			for(Stock stock: stocks.getStocks()) {
+				System.out.println("\t" + stock.getDate());
+				hsl += stock.getChangeRate();
+				index++;
+				if(index == totalSize) {
+					todayStock = stock;
+				}
+			}
+			//calculate hsl and up
+			hsl = hsl / totalSize;
+			//calculate average price
+			System.out.println(todayStock);
+
+			System.out.println("average hsl: " + hsl);
+
+		}
 	}
 	
-	public static List<String[]> split(MongoDB mongodb, String stockCode, String startDateStr)
-			throws Exception {
-		Date startDate = sdf.parse(startDateStr);
-		Date endDate = getBeforeDate(startDate);
-		System.out.println(startDate+ "-" + endDate);
-		Query query = new Query();
-		query.addCriteria(Criteria.where("stockCode").is(stockCode));
-		query.addCriteria(Criteria.where("stocks.date").gte(endDate).lte(startDate));
-
-		
+	private String getFormatDate(Date date) {
+		date.setMonth(date.getMonth() - 1);
+		String str = "new Date(" + sdf.format(date) + ")";  
+		return str;
+	}
+	
+	
+	/*
+     * 
+     * db.stocks.group({
+		    "key" : {"_id" : true},
+		    "initial" : {"stocks":[]},
+		    "condition" : {"_id" : "cn_002306"},
+		    "$reduce" : function(doc, prev) {
+		        for (var k in doc.stocks) {
+		            if (doc.stocks[k]['date'] > new Date(2013, 9, 1)) {
+		                prev.stocks.push(doc.stocks[k]);
+		            }
+		        }
+		    },
+			"finalize" : function(prev) {
+		        prev.count=prev.stocks.length;
+		    }
+		});
+     */
+	private GroupByResults<Stocks> getGroupByResult(String stockCode, String startDateStr, String endDateStr) {
 		Criteria criteria = Criteria.where("_id").is(stockCode);  
         GroupBy groupBy = new GroupBy("_id");
-        groupBy.initialDocument("{}");
-        String finalizeFunction = "function(prev) {" +
-	        "for (var k in prev.stocks) {" +
-	        "   if (prev.stocks[k]['changeRate'] > 1) {" +
-	        "        delete prev.stocks[k];" +
-	        "    }" +
+        groupBy.initialDocument("{\"stocks\":[]}");
+		String reduceFunction = "function(doc, prev) { "+
+	        "for (var k in doc.stocks) {"+
+	        "   if (doc.stocks[k]['date'] >= " + endDateStr +
+	        "		&& doc.stocks[k]['date'] <= " + startDateStr + ") {"+
+	        "        prev.stocks.push(doc.stocks[k]);"+
+	        "    }"+
 	        "}}";
-        
-        /*
-         * 
-         * db.stocks.group({
-    "key" : {"_id" : true},
-    "initial" : {"person":[]},
-    "condition" : {"_id" : "cn_002306"},
-    "$reduce" : function(doc, prev) {
-        for (var k in doc.stocks) {
-            if (doc.stocks[k]['changeRate'] > 10) {
-                prev.person.push(doc.stocks[k]);
-            }
-        }
-    },
-	"finalize" : function(prev) {
-        prev.count=prev.person.length;
-    }
-});
-         */
-		groupBy.finalizeFunction(finalizeFunction);
-		String reduceFunction = "function(obj,prev){prev.stocks = obj.stocks;}";
 		groupBy.reduceFunction(reduceFunction);
-		//List<Stocks> results = mongodb.find(query, Stocks.class, Constants.stockCollectionName);
-		GroupByResults<Stock> result = mongodb.group(criteria, Constants.stockCollectionName, groupBy, Stock.class);
-		//System.out.println("size: " + results.get(0).getStocks().size() + "----" + results);
-		System.out.println(result.getCount());
-		for(Stock stock: result) {
-			System.out.println(stock.getDate());
-		}
-		return null;
+		GroupByResults<Stocks> result = mongodb.group(criteria, Constants.stockCollectionName, groupBy, Stocks.class);
+		return result;
 	}
 	
-
-	private static Date getBeforeDate(Date date) {
+	//get the date before 100 days
+	private Date getBeforeDate(Date date) {
 		Calendar nowCal = Calendar.getInstance();
 		nowCal.setTime(date);
 		nowCal.set(Calendar.DATE, nowCal.get(Calendar.DATE) - Constants.splitDays);
@@ -94,14 +122,7 @@ public class SimpleModel implements Model {
 		return nowCal.getTime();
 	}
 
-	
 	public static void main(String[] args) throws Exception {
-		Calendar cal = Calendar.getInstance();    
-		TimeZone timeZone = TimeZone.getTimeZone("GMT+8:00");
-		cal.setTimeZone(timeZone);
-		
-		System.out.println(cal.getTime());
-		
 		String confFile = Constants.defaultConfigFile;
 		if(args.length > 0) {
 			confFile = args[0];
@@ -111,8 +132,8 @@ public class SimpleModel implements Model {
 		MongoDB mongodb = new MongoDB(props);
 		
 		String stockCode = "cn_002306";
-		String startDateStr = "2013-10-16";
-		split(mongodb, stockCode, startDateStr);
+		SimpleModel sm = new SimpleModel(mongodb);
+		sm.calculateDaysOfHSL(stockCode, new Date());
 	}
 	
 }

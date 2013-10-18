@@ -129,7 +129,7 @@ public class Stock implements Comparable {
 	@Override
 	public int compareTo(Object o) {
 		Stock stock = (Stock) o;
-		return date.getTime() > stock.getDate().getTime() ? 1 : (date.getTime() == stock.getDate().getTime() ? 0 : -1);
+		return date.getTime() > stock.getDate().getTime() ? -1 : (date.getTime() == stock.getDate().getTime() ? 0 : 1);
 	}
 	
 }

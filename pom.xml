@@ -45,13 +45,24 @@
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.7</version>
         </dependency>
-        
+        <dependency>
+          	<groupId>org.apache.commons</groupId>
+		  	<artifactId>commons-lang3</artifactId>
+		  	<version>3.1</version>
+		</dependency>
         <dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-		
+		<dependency>
+             <groupId>date4j</groupId>
+			 <artifactId>date4j</artifactId>
+			 <version>1.0</version>
+			 <scope>system</scope>
+			 <systemPath>${project.basedir}/lib/date4j.jar</systemPath>
+         </dependency>
+            
         <!-- logging -->
         <dependency>
             <groupId>log4j</groupId>

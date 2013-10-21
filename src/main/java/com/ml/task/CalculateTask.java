@@ -80,8 +80,9 @@ public class CalculateTask implements Runnable {
 			//System.out.println("beforeDate: " + beforeDate);
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
-			ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
-			if(theDateSR == null || beforeDateSR == null)
+			//ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
+			//if(theDateSR == null || beforeDateSR == null)
+			if(theDateSR == null)
 				return flag;
 			//System.out.println(theDateSR + "_" + beforeDateSR);
 			
@@ -102,11 +103,11 @@ public class CalculateTask implements Runnable {
 			}*/
 			//目前股价在5日、10日附近(2%)
 			flag = 4;
-			Stock stock = getQueryStock(stockCode, theDateSecs);
+			/*Stock stock = getQueryStock(stockCode, theDateSecs);
 			if(stock == null)
 				return flag;
-			double nowPrice = stock.getOpening();
-			//double nowPrice = theDateSR.getPrice();
+			double nowPrice = stock.getOpening();*/
+			double nowPrice = theDateSR.getPrice();
 			double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
 			double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
 			//System.out.println(fiveDiff + ":" + tenDiff);

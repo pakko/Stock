@@ -23,7 +23,7 @@ import com.ml.util.DateUtil;
 
 public class TransferDataTask implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger(CalculateTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(TransferDataTask.class);
 
 	private MongoDB mongodb;
 	private List<String> stockCodes;
@@ -82,7 +82,7 @@ public class TransferDataTask implements Runnable {
 			//ignore no stock data's case
 			Stock theDateStock = getQueryStock(stockCode, theDateSecs);
 			Stock beforeDateStock = getQueryStock(stockCode, beforeDateSecs);
-			if(theDateStock == null || beforeDateStock == null)
+			if( !(theDateStock != null && beforeDateStock != null))
 				return;
 			
 			//get 100 days' stock data
@@ -90,8 +90,8 @@ public class TransferDataTask implements Runnable {
 			query.addCriteria(Criteria.where("code").is(stockCode));
 			query.addCriteria(Criteria.where("date").gte(beforeDateSecs).lte(theDateSecs));
 			List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
-			System.out.println(stockList);
-			if(stockList.size() <= 0)
+			int stockSize = stockList.size();
+			if( !(stockSize > 0 && stockSize > Constants.BaseDays / 2.0))
 				return;
 			
 			//the present stock price
@@ -104,7 +104,7 @@ public class TransferDataTask implements Runnable {
 				totalChangeRate += stock.getChangeRate();
 				turnOverRate += stock.getTurnOverRate();
 			}
-			turnOverRate = turnOverRate / stockList.size();
+			turnOverRate = turnOverRate / stockSize;
 			
 			//2, calculate average price
 			double fiveAP = getDaysOfAveragePrice(stockList, 5);

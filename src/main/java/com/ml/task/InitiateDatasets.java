@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 
@@ -21,12 +22,14 @@ public class InitiateDatasets {
 			MongoDB mongodb, List<String> stockCodes) {
 		// get dates for retrieveDataTask
 		List<String[]> splitDates = DateUtil.getSplitDates(beginDate, endDate, Constants.SplitDays);
-		ExecutorService retrieveDataService = Executors.newFixedThreadPool(splitDates.size());
+		ExecutorService retrieveDataExecutor = Executors.newFixedThreadPool(splitDates.size());
 	    for (String[] splitDate : splitDates) {
 			RetrieveDataTask rdt = new RetrieveDataTask(mongodb, stockCodes, splitDate);
-			retrieveDataService.submit(rdt);
+			retrieveDataExecutor.submit(rdt);
 		}
-	    retrieveDataService.shutdown();
+	    retrieveDataExecutor.shutdown();
+	    
+	    //waitForComplete(retrieveDataExecutor, 60 * 2);
 	}
 	
 	public static void transferStocks(String beginDate, String endDate,
@@ -34,12 +37,24 @@ public class InitiateDatasets {
 		// get data for transferDataTask
 		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 		List<List<String>> dateList = DateUtil.splitList(dates, 50);
-		ExecutorService transferDataService = Executors.newFixedThreadPool(dateList.size());
+		ExecutorService transferDataExecutor = Executors.newFixedThreadPool(dateList.size());
 		for (List<String> date : dateList) {
 			TransferDataTask tdt = new TransferDataTask(mongodb, stockCodes, date);
-			transferDataService.submit(tdt);
+			transferDataExecutor.submit(tdt);
 		}
-		transferDataService.shutdown();
+		transferDataExecutor.shutdown();
+		//waitForComplete(transferDataExecutor, 60 * 2);
+	}
+	
+	private static void waitForComplete(ExecutorService executor, int seconds) {
+		try {  
+            boolean loop = true;  
+            while(loop) {    //等待所有任务完成  
+                loop = !executor.awaitTermination(seconds, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {  
+            e.printStackTrace();  
+        }  
 	}
 	
 	public static void main(String[] args) throws Exception  {

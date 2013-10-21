@@ -37,12 +37,13 @@ public class Main {
 		String endDate = "2013-10-21";
 	    
 		Query query = new Query();
-		query.addCriteria(Criteria.where("code").is("600000"));
+		query.addCriteria(Criteria.where("code").is("cn_600000"));
 		query.addCriteria(Criteria.where("date").is(DateUtil.getMilliseconds(endDate)));
 		Stock stock = mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+		System.out.println(stock);
 		if(stock == null) {
 			InitiateDatasets.retrieveStocks(beginDate, endDate, mongodb, stockCodes);
-			//InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
+			InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
 		}
 		
 		int cmd = 1;

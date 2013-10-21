@@ -39,15 +39,16 @@ public class InitiateDatasets {
 		// add listener
 		QueueListenerManager manager = new QueueListenerManager();
         manager.addQueueListener(new TransferDataListener(mongodb, stockCodes, dateList, transferDataService));
+        manager.fireWorkspaceCommand("take_retrieved_data");
         
         // get dates for retrieveDataTask
-		List<String[]> splitDates = DateUtil.getSplitDates(beginDate, endDate, Constants.SplitDays);
+		/*List<String[]> splitDates = DateUtil.getSplitDates(beginDate, endDate, Constants.SplitDays);
 		ExecutorService retrieveDataService = Executors.newFixedThreadPool(splitDates.size());
 	    for (String[] splitDate : splitDates) {
-			RetrieveDataTask rdt = new RetrieveDataTask(mongodb, stockCodes, splitDate, manager);
+			RetrieveDataTask rdt = new RetrieveDataTask(mongodb, stockCodes, splitDate);
 			retrieveDataService.submit(rdt);
 		}
-	    retrieveDataService.shutdown();
+	    retrieveDataService.shutdown();*/
 	    
 		
 	}

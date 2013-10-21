@@ -93,22 +93,37 @@ public class CalculateTask implements Runnable {
 		if( theDateSR.getTotalChangeRate() >= 50 ) {
 			return flag;
 		}
-		//对比前100交易日的平均换手率，这100天超过了5倍以上
+		//对比前100交易日的平均换手率，这100天超过了2倍以上
 		flag = 3;
-		if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 5 ) {
+		if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
 			return flag;
 		}
-		//目前股价与5日，10日，20日，30日的均价几乎相同，相差在5%以内
+		//这个就用目前股价在5日，或十日附近(2%)，然后
 		flag = 4;
 		double nowPrice = theDateSR.getPrice();
 		double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
 		double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
-		double twentyDiff = Math.abs(nowPrice - theDateSR.getTwentyAP()) / nowPrice;
-		double thirdtyDiff = Math.abs(nowPrice - theDateSR.getThirtyAP()) / nowPrice;
-		if( fiveDiff > 0.05 || tenDiff > 0.05 || twentyDiff > 0.05 || thirdtyDiff > 0.05) {
+		if( fiveDiff > 0.02 || tenDiff > 0.02 ) {
 			return flag;
 		}
+		//4个均价相差10%以内来代替(基数为4个均价的均值)
 		flag = 5;
+		double avgOfAP = (theDateSR.getFiveAP() + theDateSR.getTenAP() +  theDateSR.getTwentyAP() + theDateSR.getThirtyAP()) / 4;
+		double fiveDiffOfAP = Math.abs(avgOfAP - theDateSR.getFiveAP()) / avgOfAP;
+		double tenDiffOfAP = Math.abs(avgOfAP - theDateSR.getTenAP()) / avgOfAP;
+		double twentyDiffOfAP = Math.abs(avgOfAP - theDateSR.getTwentyAP()) / avgOfAP;
+		double thirtyDiffOfAP = Math.abs(avgOfAP - theDateSR.getThirtyAP()) / avgOfAP;
+		if( fiveDiffOfAP > 0.1 || tenDiffOfAP > 0.1 || twentyDiffOfAP > 0.1 || thirtyDiffOfAP > 0.1) {
+			return flag;
+		}
+		//5日均价大于10日均价，10日均价大于20均价，20日均价大于30日均价
+		flag = 6;
+		if( !(theDateSR.getFiveAP() <= theDateSR.getTenAP() 
+				&& theDateSR.getTenAP() <= theDateSR.getTwentyAP() 
+				&& theDateSR.getTwentyAP() <= theDateSR.getThirtyAP()) ) {
+			return flag;
+		}
+		flag = 7;
 		logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 		MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
 		mongodb.save(matchResult, Constants.MatchResultCollectionName);

@@ -105,13 +105,13 @@ public class CalculateTask implements Runnable {
 		double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
 		double twentyDiff = Math.abs(nowPrice - theDateSR.getTwentyAP()) / nowPrice;
 		double thirdtyDiff = Math.abs(nowPrice - theDateSR.getThirtyAP()) / nowPrice;
-		if( fiveDiff > 0.05 || tenDiff > 0.05 || twentyDiff > 0.05 || thirdtyDiff > 0.05) {
+		if( !(fiveDiff < 0.05 && tenDiff < 0.05 && twentyDiff < 0.05 && thirdtyDiff < 0.05)) {
 			return flag;
 		}
 		flag = 5;
 		logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 		MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
-		mongodb.save(matchResult, Constants.MatchResultCollectionName);
+		mongodb.save(matchResult, Constants.MatchResultCollectionName + "_master");
 		return flag;
 	}
 	

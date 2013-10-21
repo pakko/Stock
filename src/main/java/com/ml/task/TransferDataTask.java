@@ -2,9 +2,13 @@ package com.ml.task;
 
 import hirondelle.date4j.DateTime;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +40,7 @@ public class TransferDataTask implements Runnable {
 	public void run() {
 		long start = System.currentTimeMillis();
 		try{
-			logger.info("begin to run calculate: " + dataList.size());
+			logger.info("begin to run transfer: " + dataList.size());
 			for (String date : dataList) {
 				for (String line : stockCodes) {
 					String stockCode = "cn_" + line.split(",")[0];
@@ -48,6 +52,19 @@ public class TransferDataTask implements Runnable {
 		}
 		long end = System.currentTimeMillis();
 		logger.info("cost time: " + (end - start));
+	}
+	
+	public static void main(String[] args) throws FileNotFoundException, IOException {
+		String confFile = Constants.DefaultConfigFile;
+		if(args.length > 0) {
+			confFile = args[0];
+		}
+		Properties props = new Properties();
+		props.load(new FileInputStream(confFile));
+		MongoDB mongodb = new MongoDB(props);
+		TransferDataTask rdt = new TransferDataTask(mongodb, null, null);
+		String stockCode = "cn_000050";
+		rdt.transfer(stockCode, new DateTime("2013-10-17"));
 	}
 	/*
 	 * steps: 
@@ -62,12 +79,18 @@ public class TransferDataTask implements Runnable {
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 	
+			//ignore no stock data's case
+			Stock theDateStock = getQueryStock(stockCode, theDateSecs);
+			Stock beforeDateStock = getQueryStock(stockCode, beforeDateSecs);
+			if(theDateStock == null || beforeDateStock == null)
+				return;
+			
 			//get 100 days' stock data
 			Query query = new Query();
 			query.addCriteria(Criteria.where("code").is(stockCode));
 			query.addCriteria(Criteria.where("date").gte(beforeDateSecs).lte(theDateSecs));
 			List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
-			
+			System.out.println(stockList);
 			if(stockList.size() <= 0)
 				return;
 			
@@ -96,6 +119,13 @@ public class TransferDataTask implements Runnable {
 		} catch(Exception e) {
 			logger.error("Error on transfer: " + e.getMessage());
 		}
+	}
+	
+	private Stock getQueryStock(String stockCode, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").is(date));
+		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
 	}
 	
 	private List<Stock> getDaysOfData(List<Stock> stockList, int days) {

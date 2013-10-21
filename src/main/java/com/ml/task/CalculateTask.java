@@ -17,6 +17,7 @@ import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
 import com.ml.model.ScenarioResult;
 import com.ml.model.StatsResult;
+import com.ml.model.Stock;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -96,19 +97,24 @@ public class CalculateTask implements Runnable {
 			}
 			//对比前100交易日的平均换手率，这100天超过了2倍以上
 			flag = 3;
-			if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
+			/*if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
 				return flag;
-			}
+			}*/
 			//目前股价在5日、10日附近(2%)
 			flag = 4;
-			double nowPrice = theDateSR.getPrice();
+			Stock stock = getQueryStock(stockCode, theDateSecs);
+			if(stock == null)
+				return flag;
+			double nowPrice = stock.getOpening();
+			//double nowPrice = theDateSR.getPrice();
 			double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
 			double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
+			//System.out.println(fiveDiff + ":" + tenDiff);
 			if( !(fiveDiff < 0.02 && tenDiff < 0.02 )) {
 				return flag;
 			}
 			//4个均价相差10%以内来代替(基数为4个均价的均值)
-			flag = 5;
+			/*flag = 5;
 			double avgOfAP = (theDateSR.getFiveAP() + theDateSR.getTenAP() +  theDateSR.getTwentyAP() + theDateSR.getThirtyAP()) / 4;
 			double fiveDiffOfAP = Math.abs(avgOfAP - theDateSR.getFiveAP()) / avgOfAP;
 			double tenDiffOfAP = Math.abs(avgOfAP - theDateSR.getTenAP()) / avgOfAP;
@@ -116,7 +122,7 @@ public class CalculateTask implements Runnable {
 			double thirtyDiffOfAP = Math.abs(avgOfAP - theDateSR.getThirtyAP()) / avgOfAP;
 			if( !(fiveDiffOfAP < 0.1 && tenDiffOfAP < 0.1 && twentyDiffOfAP < 0.1 && thirtyDiffOfAP < 0.1)) {
 				return flag;
-			}
+			}*/
 			//5日均价大于10日均价，10日均价大于20均价，20日均价大于30日均价
 			flag = 6;
 			if( !(theDateSR.getFiveAP() > theDateSR.getTenAP() 
@@ -127,7 +133,7 @@ public class CalculateTask implements Runnable {
 			flag = 7;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
-			mongodb.save(matchResult, Constants.MatchResultCollectionName);
+			mongodb.save(matchResult, Constants.MatchResultCollectionName + "_01");
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 		}
@@ -141,6 +147,13 @@ public class CalculateTask implements Runnable {
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 
+	private Stock getQueryStock(String stockCode, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").is(date));
+		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+	}
+	
 	public static void main(String[] args) throws Exception {
 		String confFile = Constants.DefaultConfigFile;
 		if(args.length > 0) {
@@ -150,9 +163,9 @@ public class CalculateTask implements Runnable {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		
-		String stockCode = "cn_002306";
+		String stockCode = "cn_002610";
 		CalculateTask sm = new CalculateTask(mongodb, null, null);
-		int flag = sm.calculate(stockCode, new DateTime("2013-10-18"));
+		int flag = sm.calculate(stockCode, new DateTime("2013-10-21"));
 		System.out.println(flag);
 	}
 

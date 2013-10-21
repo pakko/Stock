@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.ml.db.MongoDB;
 import com.ml.model.Stock;
-import com.ml.qevent.QueueListenerManager;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -96,7 +95,7 @@ public class RetrieveDataTask implements Runnable {
 			//logger.info("store stock size: " + stockList.size());
 
 		} catch (IOException e) {
-			System.err.println("Download, Stock code: " + stockCode + 
+			logger.error("Download, Stock code: " + stockCode + 
 					", start date [" + beginDate +"], end date [" + endDate + "] , result: " + result + "---" + e.getMessage());
 		}
 	}
@@ -150,7 +149,7 @@ public class RetrieveDataTask implements Runnable {
 				stockList.add(stock);
 				//System.out.println(stock.toString());
 			} catch (Exception e) {
-				System.err.println("StockCode: " + stockCode + ", data: " + list + ", in lists: " + lists + ", error: " + e.getMessage());
+				logger.error("StockCode: " + stockCode + ", data: " + list + ", in lists: " + lists + ", error: " + e.getMessage());
 			}
 		}
 		return stockList;

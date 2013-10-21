@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 
 import com.ml.db.MongoDB;
+import com.ml.model.MatchResult;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -30,14 +31,25 @@ public class Main {
 		String beginDate = "2013-01-01";
 		String endDate = "2013-10-20";
 	    
-		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
-		dates = DateUtil.truncateDateList(dates, beginDate, Constants.BaseDays);
-		List<List<String>> dataList = DateUtil.splitList(dates, 50);
-		ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
-		for (List<String> data : dataList) {
-			CalculateTask ct = new CalculateTask(mongodb, stockCodes, data);
-			executor.submit(ct);
+		int cmd = 1;
+		if(cmd == 1) {
+			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
+			dates = DateUtil.truncateDateList(dates, beginDate, Constants.BaseDays);
+			List<List<String>> dataList = DateUtil.splitList(dates, 50);
+			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
+			for (List<String> data : dataList) {
+				CalculateTask ct = new CalculateTask(mongodb, stockCodes, data);
+				executor.submit(ct);
+			}
+			executor.shutdown();
 		}
-		executor.shutdown();
+		else if(cmd == 2) {
+			List<MatchResult> matchs = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
+			for(MatchResult match: matchs) {
+				System.out.println(match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
+			}
+		}
+		
+		
 	}
 }

@@ -55,43 +55,47 @@ public class TransferDataTask implements Runnable {
 	 * 	2) start date的股价和5日，10日，20日，30日均价的比值
 	 */
 	public void transfer(String stockCode, DateTime theDate) {
-		//DateTime beforeDate = theDate.minusDays(Constants.BaseDays);
-		DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
-		
-		long theDateSecs = DateUtil.getMilliseconds(theDate);
-		long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-
-		//get 100 days' stock data
-		Query query = new Query();
-		query.addCriteria(Criteria.where("code").is(stockCode));
-		query.addCriteria(Criteria.where("date").gte(beforeDateSecs).lte(theDateSecs));
-		List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
-		
-		if(stockList.size() <= 0)
-			return;
-		
-		//the present stock price
-		double stockPrice = stockList.get(0).getClose();
-		
-		//1, calculate turnOverRate and totalChangeRate
-		double turnOverRate = 0.0;
-		double totalChangeRate = 0.0;
-		for(Stock stock: stockList) {
-			totalChangeRate += stock.getChangeRate();
-			turnOverRate += stock.getTurnOverRate();
+		try{
+			//DateTime beforeDate = theDate.minusDays(Constants.BaseDays);
+			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
+			
+			long theDateSecs = DateUtil.getMilliseconds(theDate);
+			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+	
+			//get 100 days' stock data
+			Query query = new Query();
+			query.addCriteria(Criteria.where("code").is(stockCode));
+			query.addCriteria(Criteria.where("date").gte(beforeDateSecs).lte(theDateSecs));
+			List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
+			
+			if(stockList.size() <= 0)
+				return;
+			
+			//the present stock price
+			double stockPrice = stockList.get(0).getClose();
+			
+			//1, calculate turnOverRate and totalChangeRate
+			double turnOverRate = 0.0;
+			double totalChangeRate = 0.0;
+			for(Stock stock: stockList) {
+				totalChangeRate += stock.getChangeRate();
+				turnOverRate += stock.getTurnOverRate();
+			}
+			turnOverRate = turnOverRate / stockList.size();
+			
+			//2, calculate average price
+			double fiveAP = getDaysOfAveragePrice(stockList, 5);
+			double tenAP = getDaysOfAveragePrice(stockList, 10);
+			double twentyAP = getDaysOfAveragePrice(stockList, 20);
+			double thirdtyAP = getDaysOfAveragePrice(stockList, 30);
+			
+			//3, save results
+			ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice,
+					turnOverRate, totalChangeRate, fiveAP, tenAP, twentyAP, thirdtyAP);
+			mongodb.save(smr, Constants.ScenarioResultCollectionName);
+		} catch(Exception e) {
+			logger.error("Error on transfer: " + e.getMessage());
 		}
-		turnOverRate = turnOverRate / stockList.size();
-		
-		//2, calculate average price
-		double fiveAP = getDaysOfAveragePrice(stockList, 5);
-		double tenAP = getDaysOfAveragePrice(stockList, 10);
-		double twentyAP = getDaysOfAveragePrice(stockList, 20);
-		double thirdtyAP = getDaysOfAveragePrice(stockList, 30);
-		
-		//3, save results
-		ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice,
-				turnOverRate, totalChangeRate, fiveAP, tenAP, twentyAP, thirdtyAP);
-		mongodb.save(smr, Constants.ScenarioResultCollectionName);
 	}
 	
 	private List<Stock> getDaysOfData(List<Stock> stockList, int days) {

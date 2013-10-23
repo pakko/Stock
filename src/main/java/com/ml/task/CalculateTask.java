@@ -17,7 +17,6 @@ import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
 import com.ml.model.ScenarioResult;
 import com.ml.model.StatsResult;
-import com.ml.model.Stock;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -74,15 +73,14 @@ public class CalculateTask implements Runnable {
 		int flag = 0;
 		try{
 			// 得到目前和一百天前的ScenarioResult
-			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
+			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 			//System.out.println("beforeDate: " + beforeDate);
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
-			//ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
-			//if(theDateSR == null || beforeDateSR == null)
-			if(theDateSR == null)
+			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
+			if(theDateSR == null || beforeDateSR == null)
 				return flag;
 			//System.out.println(theDateSR + "_" + beforeDateSR);
 			
@@ -98,15 +96,11 @@ public class CalculateTask implements Runnable {
 			}
 			//对比前100交易日的平均换手率，这100天超过了2倍以上
 			flag = 3;
-			/*if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
+			if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() > 2) {
 				return flag;
-			}*/
+			}
 			//目前股价在5日、10日附近(2%)
 			flag = 4;
-			/*Stock stock = getQueryStock(stockCode, theDateSecs);
-			if(stock == null)
-				return flag;
-			double nowPrice = stock.getOpening();*/
 			double nowPrice = theDateSR.getPrice();
 			double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
 			double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
@@ -114,6 +108,14 @@ public class CalculateTask implements Runnable {
 			if( !(fiveDiff < 0.02 && tenDiff < 0.02 )) {
 				return flag;
 			}
+			//均价在上升通道
+			flag = 5;
+			DateTime oneDayBefore = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
+			long oneDayBeforeSecs = DateUtil.getMilliseconds(oneDayBefore);
+			ScenarioResult oneDayBeforeSR = getQuerySR(stockCode, oneDayBeforeSecs);
+			if( oneDayBeforeSR != null && oneDayBeforeSR.getFiveAP() > theDateSR.getFiveAP())
+				return flag;
+			
 			//4个均价相差10%以内来代替(基数为4个均价的均值)
 			/*flag = 5;
 			double avgOfAP = (theDateSR.getFiveAP() + theDateSR.getTenAP() +  theDateSR.getTwentyAP() + theDateSR.getThirtyAP()) / 4;
@@ -134,7 +136,7 @@ public class CalculateTask implements Runnable {
 			flag = 7;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
-			mongodb.save(matchResult, Constants.MatchResultCollectionName + "_01");
+			mongodb.save(matchResult, Constants.MatchResultCollectionName);
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 		}
@@ -147,12 +149,11 @@ public class CalculateTask implements Runnable {
 		query.addCriteria(Criteria.where("date").is(date));
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
-
-	private Stock getQueryStock(String stockCode, long date) {
+	private ScenarioResult getQueryNearSR(String stockCode, long date) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
-		query.addCriteria(Criteria.where("date").is(date));
-		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+		query.addCriteria(Criteria.where("date").gte(date));
+		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	
 	public static void main(String[] args) throws Exception {

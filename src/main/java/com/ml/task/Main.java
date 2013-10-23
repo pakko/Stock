@@ -33,20 +33,19 @@ public class Main {
 		List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		System.out.println("Corp code size: " + stockCodes.size());
 		
-		String beginDate = "2013-10-21";
-		String endDate = "2013-10-21";
+		String beginDate = "2013-01-01";
+		String endDate = "2013-10-22";
 	    
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is("cn_600000"));
 		query.addCriteria(Criteria.where("date").is(DateUtil.getMilliseconds(endDate)));
 		Stock stock = mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
-		System.out.println(stock);
-		if(stock == null) {
-			InitiateDatasets.retrieveStocks(beginDate, endDate, mongodb, stockCodes);
+		if(stock != null) {
+			//InitiateDatasets.retrieveStocks(beginDate, endDate, mongodb, stockCodes);
 			InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
 		}
 		
-		int cmd = 1;
+		int cmd = 3;
 		if(cmd == 1) {
 			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 			//dates = DateUtil.truncateDateList(dates, beginDate, Constants.BaseDays);
@@ -60,7 +59,7 @@ public class Main {
 			executor.shutdown();
 		}
 		else if(cmd == 2) {
-			List<MatchResult> matches = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName + "_01");
+			List<MatchResult> matches = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
 			Collections.sort(matches, new Comparator<MatchResult>() {
 
 				@Override

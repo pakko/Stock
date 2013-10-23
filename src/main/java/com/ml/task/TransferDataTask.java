@@ -6,13 +6,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Order;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
@@ -29,7 +32,8 @@ public class TransferDataTask implements Runnable {
 	private List<String> stockCodes;
 	private List<String> dataList;
 	
-	public TransferDataTask(MongoDB mongodb, List<String> stockCodes, List<String> dataList) {
+	public TransferDataTask(MongoDB mongodb, List<String> stockCodes, 
+			List<String> dataList) {
 		this.mongodb = mongodb;
 		this.stockCodes = stockCodes;
 		this.dataList = dataList;
@@ -42,10 +46,17 @@ public class TransferDataTask implements Runnable {
 		try{
 			logger.info("begin to run transfer: " + dataList.size());
 			for (String date : dataList) {
+				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 				for (String line : stockCodes) {
 					String stockCode = "cn_" + line.split(",")[0];
-					this.transfer(stockCode, new DateTime(date));
+					int res = this.transfer(stockCode, new DateTime(date));
+					Integer tmp = stats.get(res);
+					if(tmp == null) {
+						tmp = new Integer(0);
+					}
+					stats.put(res, tmp + 1);
 				}
+				logger.info("Date: " + date + ", stats: " + stats);
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -63,7 +74,7 @@ public class TransferDataTask implements Runnable {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		TransferDataTask rdt = new TransferDataTask(mongodb, null, null);
-		String stockCode = "cn_000050";
+		String stockCode = "cn_000553";
 		rdt.transfer(stockCode, new DateTime("2013-10-17"));
 	}
 	/*
@@ -71,29 +82,31 @@ public class TransferDataTask implements Runnable {
 	 * 	1) 计算1年的所有100天的换手率及涨幅
 	 * 	2) start date的股价和5日，10日，20日，30日均价的比值
 	 */
-	public void transfer(String stockCode, DateTime theDate) {
+	public int transfer(String stockCode, DateTime theDate) {
+		int flag = 0;
 		try{
-			//DateTime beforeDate = theDate.minusDays(Constants.BaseDays);
-			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
-			
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
+			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-	
-			//ignore no stock data's case
+
 			Stock theDateStock = getQueryStock(stockCode, theDateSecs);
-			Stock beforeDateStock = getQueryStock(stockCode, beforeDateSecs);
-			if( !(theDateStock != null && beforeDateStock != null))
-				return;
+			Stock beforeDateStock = getQueryNearStock(stockCode, beforeDateSecs);
+			
+			flag = 1;
+			if(theDateStock == null || beforeDateStock == null)
+				return flag;
 			
 			//get 100 days' stock data
 			Query query = new Query();
 			query.addCriteria(Criteria.where("code").is(stockCode));
-			query.addCriteria(Criteria.where("date").gte(beforeDateSecs).lte(theDateSecs));
+			query.addCriteria(Criteria.where("date").gte(beforeDateStock.getDate()).lte(theDateSecs));
 			List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
 			int stockSize = stockList.size();
+
+			flag = 2;
 			if( !(stockSize > 0 && stockSize > Constants.BaseDays / 2.0))
-				return;
-			
+				return flag;
+			flag = 3;
 			//the present stock price
 			double stockPrice = stockList.get(0).getClose();
 			
@@ -119,12 +132,21 @@ public class TransferDataTask implements Runnable {
 		} catch(Exception e) {
 			logger.error("Error on transfer: " + e.getMessage());
 		}
+		return flag;
 	}
 	
 	private Stock getQueryStock(String stockCode, long date) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").is(date));
+		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+	}
+	
+	private Stock getQueryNearStock(String stockCode, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").gte(date));
+		query.sort().on("date", Order.ASCENDING);
 		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
 	}
 	

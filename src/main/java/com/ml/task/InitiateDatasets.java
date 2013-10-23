@@ -29,7 +29,7 @@ public class InitiateDatasets {
 		}
 	    retrieveDataExecutor.shutdown();
 	    
-	    //waitForComplete(retrieveDataExecutor, 60 * 2);
+	    waitForComplete(retrieveDataExecutor, 60 * 2);
 	}
 	
 	public static void transferStocks(String beginDate, String endDate,
@@ -43,7 +43,7 @@ public class InitiateDatasets {
 			transferDataExecutor.submit(tdt);
 		}
 		transferDataExecutor.shutdown();
-		//waitForComplete(transferDataExecutor, 60 * 2);
+		waitForComplete(transferDataExecutor, 60 * 2);
 	}
 	
 	private static void waitForComplete(ExecutorService executor, int seconds) {

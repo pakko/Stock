@@ -29,8 +29,6 @@ public class DateUtil {
 			System.out.println(dates[0] + ":" + dates[1]);
 		}
 		//getWorkingDays(beginDate, endDate);
-		DateTime d = getIntervalWorkingDay(new DateTime("2013-10-20"), 5, true);
-		System.out.println(d);
 
 	}
 	
@@ -48,7 +46,7 @@ public class DateUtil {
 	}
 	
 	public static List<String> truncateDateList(List<String> dateList, String dateStr, int interval) {
-		DateTime date = DateUtil.getIntervalWorkingDay(new DateTime(dateStr), interval, true);
+		DateTime date = DateUtil.getIntervalWorkingDay(getMilliseconds(dateStr), interval, true);
 		String dateFormat = date.format(FORMAT_PATTERN);
 		return dateList.subList(dateList.indexOf(dateFormat), dateList.size() - 1);
 	}
@@ -130,11 +128,19 @@ public class DateUtil {
 		return dateList;
 	}
 	
-	public static DateTime getIntervalWorkingDay(DateTime startDate, int interval, boolean isNext) {
-		DateTime endDate = startDate.minusDays(interval * 2);
+	public static DateTime getIntervalWorkingDay(long startDateSecs, int interval, boolean isNext) {
+		DateTime startDate = getDateByMilliseconds(startDateSecs);
+		DateTime endDate = isNext ? startDate.plusDays(interval * 2) : startDate.minusDays(interval * 2);
+		
 		//get holidays
-		List<String> holidays = getHolidaysAndWeekendsByRange(startDate, endDate);
-
+		List<String> holidays;
+		if(getMilliseconds(endDate) < getMilliseconds(startDate)) {
+			holidays = getHolidaysAndWeekendsByRange(endDate, startDate);
+		}
+		else {
+			holidays = getHolidaysAndWeekendsByRange(startDate, endDate);
+		}
+		
 		//get working days
 		while(interval > 0) {
 			String date = startDate.format(FORMAT_PATTERN);
@@ -144,7 +150,8 @@ public class DateUtil {
 			}
 			startDate = isNext ? startDate.plusDays(1) : startDate.minusDays(1);
 		}
-		return isNext ? startDate.minusDays(1) : startDate.plusDays(1);
+		//return isNext ? startDate.minusDays(1) : startDate.plusDays(1);
+		return startDate;
 	}
 	
 	private static int getDaysBetween(DateTime startDate, DateTime endDate) {

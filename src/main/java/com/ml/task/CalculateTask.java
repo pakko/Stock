@@ -149,7 +149,21 @@ public class CalculateTask implements Runnable {
 					return flag;
 				}
 			}
-			
+			flag = 9;
+			DateTime beforeDate_1 = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
+			long beforeDateSecs_1 = DateUtil.getMilliseconds(beforeDate_1);
+			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);
+
+			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
+			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
+			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
+			System.out.println(theDateSR_1);
+			System.out.println(theDateSR_2);
+
+			if (!(theDateSR.getFiveAP() > theDateSR_1.getFiveAP() &&
+					theDateSR_1.getFiveAP() > theDateSR_2.getFiveAP())) {
+				return flag;
+			}
 			//对比前100交易日的平均换手率，这100天超过了2倍以上
 			//flag = 2;
 			//if( theDateSR.getTotalChangeRate() >= 50 ) {
@@ -189,7 +203,7 @@ public class CalculateTask implements Runnable {
 					&& theDateSR.getTwentyAP() > theDateSR.getThirtyAP()) ) {
 				return flag;
 			}*/
-			flag = 8;
+			flag = 9;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
 			mongodb.save(matchResult, Constants.MatchResultCollectionName + "_01");

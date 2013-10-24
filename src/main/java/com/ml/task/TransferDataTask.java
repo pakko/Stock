@@ -48,7 +48,7 @@ public class TransferDataTask implements Runnable {
 			for (String date : dataList) {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 				for (String line : stockCodes) {
-					String stockCode = "cn_" + line.split(",")[0];
+					String stockCode = "cn_" + line.substring(2);
 					int res = this.transfer(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {
@@ -119,15 +119,68 @@ public class TransferDataTask implements Runnable {
 			}
 			turnOverRate = turnOverRate / stockSize;
 			
+			//5日换手率
+			double avgTurnOverRate_5 = 0.0;
+			if (stockList.size() >= 5) {
+				for (int i = 0; i < 5; i++) {
+					avgTurnOverRate_5 += stockList.get(i).getTurnOverRate();
+				}
+				
+				avgTurnOverRate_5 = avgTurnOverRate_5 / 5;
+			}
+			
+			//10日换手率
+			double avgTurnOverRate_10 = 0.0;
+			if (stockList.size() >= 10) {
+				for (int i = 0; i < 10; i++) {
+					avgTurnOverRate_10 += stockList.get(i).getTurnOverRate();
+				}
+				
+				avgTurnOverRate_10 = avgTurnOverRate_10 / 10;
+			}
+			
+			//20日换手率
+			double avgTurnOverRate_20 = 0.0;
+			if (stockList.size() >= 20) {
+				for (int i = 0; i < 20; i++) {
+					avgTurnOverRate_20 += stockList.get(i).getTurnOverRate();
+				}
+				
+				avgTurnOverRate_20 = avgTurnOverRate_20 / 20;
+			}
+			
+			//30日换手率
+			double avgTurnOverRate_30 = 0.0;
+			if (stockList.size() >= 30) {
+				for (int i = 0; i < 30; i++) {
+					avgTurnOverRate_30 += stockList.get(i).getTurnOverRate();
+				}
+				
+				avgTurnOverRate_30 = avgTurnOverRate_30 / 30;
+			}
+			
+			//60日换手率
+			double avgTurnOverRate_60 = 0.0;
+			if (stockList.size() >= 60) {
+				for (int i = 0; i < 60; i++) {
+					avgTurnOverRate_60 += stockList.get(i).getTurnOverRate();
+				}
+				
+				avgTurnOverRate_60 = avgTurnOverRate_60 / 60;
+			}
+			
 			//2, calculate average price
 			double fiveAP = getDaysOfAveragePrice(stockList, 5);
 			double tenAP = getDaysOfAveragePrice(stockList, 10);
 			double twentyAP = getDaysOfAveragePrice(stockList, 20);
 			double thirdtyAP = getDaysOfAveragePrice(stockList, 30);
+			double sixtyAP = getDaysOfAveragePrice(stockList, 60);
 			
 			//3, save results
 			ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice,
-					turnOverRate, totalChangeRate, fiveAP, tenAP, twentyAP, thirdtyAP);
+					turnOverRate, totalChangeRate, fiveAP, tenAP, twentyAP, thirdtyAP,
+					sixtyAP, avgTurnOverRate_5, avgTurnOverRate_10, avgTurnOverRate_20,
+					avgTurnOverRate_30, avgTurnOverRate_60);
 			mongodb.save(smr, Constants.ScenarioResultCollectionName);
 		} catch(Exception e) {
 			logger.error("Error on transfer: " + e.getMessage());

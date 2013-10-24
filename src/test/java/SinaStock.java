@@ -21,7 +21,7 @@ import java.util.List;
  *
  */
 public class SinaStock {
-	private static String db  = "d:\\sina-stock-codes.txt" ;
+	private static String db  = "c:\\sina-stock-codes.txt" ;
 	private static final int COLUMNS = 32;
 	private static List<String> codes;
 	/*

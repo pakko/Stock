@@ -45,7 +45,8 @@ public class RetrieveDataTask implements Runnable {
 			logger.info("start date: " + dates[0] + ", end date: " + dates[1]);
 			for (String line : stockCodes) {
 				//String stockCode = "cn_002306";
-				String stockCode = "cn_" + line.split(",")[0];
+				//String stockCode = "cn_" + line.split(",")[0];
+				String stockCode = "cn_" + line.substring(2);
 				this.process(stockCode, dates[0], dates[1]);
 			}
 			long end = System.currentTimeMillis();

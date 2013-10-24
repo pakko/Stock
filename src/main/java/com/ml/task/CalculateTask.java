@@ -24,10 +24,14 @@ public class CalculateTask implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(CalculateTask.class);
 
 	/*
-	 * 1. 100个交易日内的换手率，超过300%，也就是说在这100天的平均换手率超过3% (平均换手率：100天总换手率/100)
-	 * 2. 对比再前100交易日的平均换手率，这100天超过了5倍以上
-	 * 3. 这100天内从100天到今天股价涨幅不超过50%
-	 * 4. 目前股价在在5日，10日，20日，30日均线附近，也就是说5日，10日，20日，30日的均价几乎相同，相差在5%以内
+	 * 1. 计算100天内的平均换手率
+	 * 2. 计算前100天内的平均换手率
+	 * 3. 100天内平均换手率大于前100天换手率
+	 * 3. 计算5日，10日，20日，30日，60日均价
+	 * 4. 5日和10日均价大于20日均价，20日均价大于30日均价，30日均价大于60日均价
+	 * 5. 100日内涨幅小于等于50%
+	 * 6. 如果近10日平均换手率大于前10日平均换手率，则5日均价必须大于10日均价，当前价格离5日均价不高于3%
+	 * 7. 如果近10日平均换手率小于前10日平均换手率， 则5日均价与10日均价相差不大于2%，当前价格就在5日，10日均价附近，且连续三天以上都在这个价位附近
 	 * 
 	 */
 	
@@ -50,7 +54,7 @@ public class CalculateTask implements Runnable {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
 				for (String line : stockCodes) {
-					String stockCode = "cn_" + line.split(",")[0];
+					String stockCode = "cn_" + line.substring(2);
 					int res = this.calculate(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {
@@ -73,49 +77,101 @@ public class CalculateTask implements Runnable {
 		int flag = 0;
 		try{
 			// 得到目前和一百天前的ScenarioResult
+			/*DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
+			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDate, 10, false);
+			long theDateSecs = DateUtil.getMilliseconds(theDate);
+			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+			long beforeDateSecs_10 = DateUtil.getMilliseconds(beforeDate_10);*/
+			//System.out.println("beforeDate: " + beforeDate);
+			
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
 			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
+			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDateSecs, 10, false);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-			//System.out.println("beforeDate: " + beforeDate);
+			long beforeDateSecs_10 = DateUtil.getMilliseconds(beforeDate_10);
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
+			//ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
-			if(theDateSR == null || beforeDateSR == null)
+			ScenarioResult beforeDateSR_10 = getQueryNearSR(stockCode, beforeDateSecs_10);
+			//if(theDateSR == null || beforeDateSR == null || beforeDateSR_10 == null) return flag;
+			if(theDateSR == null)
 				return flag;
-			//System.out.println(theDateSR + "_" + beforeDateSR);
+			//System.out.println(theDateSR + "_" + beforeDateSR + "_" + beforeDateSR_10);
 			
-			//平均换手率超过3%
+			//当前100天平均换手率大于前100天换手率
 			flag = 1;
-			if( theDateSR.getAvgTurnOverRate() < 3 ) {
+			if( theDateSR.getAvgTurnOverRate() <= beforeDateSR.getAvgTurnOverRate() ) {
 				return flag;
 			}
-			//100天涨幅不超过50%
+			
+			//5日，10日均价大于20日均价，20日均价大于30日均价，30日均价大于60日均价
+			//保证股票运行在上升通道中 
 			flag = 2;
-			if( theDateSR.getTotalChangeRate() >= 50 ) {
+			if( !(theDateSR.getFiveAP() > theDateSR.getTwentyAP() 
+					&& theDateSR.getTenAP() > theDateSR.getTwentyAP() 
+					&& theDateSR.getTwentyAP() > theDateSR.getThirtyAP()
+					&& theDateSR.getThirtyAP() > theDateSR.getSixtyAP()) ) {
 				return flag;
 			}
-			//对比前100交易日的平均换手率，这100天超过了2倍以上
+			
+			//涨幅不能大于50%
 			flag = 3;
-			if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() > 2) {
+			if (theDateSR.getTotalChangeRate() >= 50) {
 				return flag;
 			}
-			//目前股价在5日、10日附近(2%)
+			
+			//如果近10日平均换手率大于前10日平均换手率，则5日均价必须大于10日均价，当前价格离5日均价不高于3%
 			flag = 4;
 			double nowPrice = theDateSR.getPrice();
 			double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
-			double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
-			//System.out.println(fiveDiff + ":" + tenDiff);
-			if( !(fiveDiff < 0.02 && tenDiff < 0.02 )) {
-				return flag;
+			//double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
+			double five_ten_Diff = Math.abs(theDateSR.getFiveAP() - theDateSR.getTenAP()) / theDateSR.getFiveAP();
+			if (theDateSR.getAvgTurnOverRate_10() > beforeDateSR_10.getAvgTurnOverRate_10()) {
+				if (theDateSR.getFiveAP() < theDateSR.getTenAP()) {
+					return flag;
+				}
+				
+				flag = 5;
+				if (fiveDiff > 0.03) {
+					return flag;
+				}
+			} else {
+				//如果近10日平均换手率小于前10日平均换手率， 则5日均价与10日均价相差不大于2%，当前价格就在5日，10日均价附近，且连续三天以上都在这个价位附近
+				flag = 6;
+				if (five_ten_Diff > 0.01) {
+					return flag;
+				}
+				
+				flag = 7;
+				
+				if (fiveDiff > 0.01) {
+					return flag;
+				}
 			}
-			//均价在上升通道
-			flag = 5;
-			DateTime oneDayBefore = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
-			long oneDayBeforeSecs = DateUtil.getMilliseconds(oneDayBefore);
-			ScenarioResult oneDayBeforeSR = getQuerySR(stockCode, oneDayBeforeSecs);
-			if( oneDayBeforeSR != null && oneDayBeforeSR.getFiveAP() > theDateSR.getFiveAP())
-				return flag;
 			
+			//对比前100交易日的平均换手率，这100天超过了2倍以上
+			//flag = 2;
+			//if( theDateSR.getTotalChangeRate() >= 50 ) {
+			//	return flag;
+			//}
+			//目前股价在5日、10日附近(2%)			flag = 3;
+			/*if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
+				return flag;
+			}*/
+			 //目前股价在5日、10日附近(2%)
+			//flag = 4;
+			/*Stock stock = getQueryStock(stockCode, theDateSecs);
+			if(stock == null)
+				return flag;
+			double nowPrice = stock.getOpening();*/
+			//double nowPrice = theDateSR.getPrice();
+			//double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
+			//double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
+			//System.out.println(fiveDiff + ":" + tenDiff);
+			//if( !(fiveDiff < 0.02 && tenDiff < 0.02 )) {
+			//	return flag;
+			//}
 			//4个均价相差10%以内来代替(基数为4个均价的均值)
 			/*flag = 5;
 			double avgOfAP = (theDateSR.getFiveAP() + theDateSR.getTenAP() +  theDateSR.getTwentyAP() + theDateSR.getThirtyAP()) / 4;
@@ -126,17 +182,17 @@ public class CalculateTask implements Runnable {
 			if( !(fiveDiffOfAP < 0.1 && tenDiffOfAP < 0.1 && twentyDiffOfAP < 0.1 && thirtyDiffOfAP < 0.1)) {
 				return flag;
 			}*/
-			//5日均价大于10日均价，10日均价大于20均价，20日均价大于30日均价
-			flag = 6;
+			//5日均价大于10日均价，10日均价大于20均价，20日均价大于30日均价		
+			/*flag = 6;
 			if( !(theDateSR.getFiveAP() > theDateSR.getTenAP() 
 					&& theDateSR.getTenAP() > theDateSR.getTwentyAP() 
 					&& theDateSR.getTwentyAP() > theDateSR.getThirtyAP()) ) {
 				return flag;
-			}
-			flag = 7;
+			}*/
+			flag = 8;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
-			mongodb.save(matchResult, Constants.MatchResultCollectionName);
+			mongodb.save(matchResult, Constants.MatchResultCollectionName + "_01");
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 		}
@@ -149,6 +205,7 @@ public class CalculateTask implements Runnable {
 		query.addCriteria(Criteria.where("date").is(date));
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
+	
 	private ScenarioResult getQueryNearSR(String stockCode, long date) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));

@@ -34,7 +34,7 @@ public class Main {
 		System.out.println("Corp code size: " + stockCodes.size());
 		
 		String beginDate = "2013-01-01";
-		String endDate = "2013-10-22";
+		String endDate = "2013-10-24";
 	    
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is("cn_600000"));

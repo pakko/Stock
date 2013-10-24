@@ -11,6 +11,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Order;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
@@ -54,7 +55,8 @@ public class CalculateTask implements Runnable {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
 				for (String line : stockCodes) {
-					String stockCode = "cn_" + line.substring(2);
+					//String stockCode = "cn_" + line.substring(2);
+					String stockCode = "cn_" + line.split(",")[0];
 					int res = this.calculate(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {
@@ -77,19 +79,13 @@ public class CalculateTask implements Runnable {
 		int flag = 0;
 		try{
 			// 得到目前和一百天前的ScenarioResult
-			/*DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, Constants.BaseDays, false);
-			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDate, 10, false);
-			long theDateSecs = DateUtil.getMilliseconds(theDate);
-			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-			long beforeDateSecs_10 = DateUtil.getMilliseconds(beforeDate_10);*/
-			//System.out.println("beforeDate: " + beforeDate);
-			
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
 			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
 			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDateSecs, 10, false);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 			long beforeDateSecs_10 = DateUtil.getMilliseconds(beforeDate_10);
-	
+			//System.out.println(theDateSecs + "\n" + beforeDateSecs + "\n" + beforeDateSecs_10);
+
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
 			//ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
@@ -97,7 +93,7 @@ public class CalculateTask implements Runnable {
 			//if(theDateSR == null || beforeDateSR == null || beforeDateSR_10 == null) return flag;
 			if(theDateSR == null)
 				return flag;
-			//System.out.println(theDateSR + "_" + beforeDateSR + "_" + beforeDateSR_10);
+			//System.out.println(theDateSR + "\n" + beforeDateSR + "\n" + beforeDateSR_10);
 			
 			//当前100天平均换手率大于前100天换手率
 			flag = 1;
@@ -157,8 +153,6 @@ public class CalculateTask implements Runnable {
 			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
 			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
 			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
-			System.out.println(theDateSR_1);
-			System.out.println(theDateSR_2);
 
 			if (!(theDateSR.getFiveAP() > theDateSR_1.getFiveAP() &&
 					theDateSR_1.getFiveAP() > theDateSR_2.getFiveAP())) {
@@ -206,7 +200,7 @@ public class CalculateTask implements Runnable {
 			flag = 9;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
-			mongodb.save(matchResult, Constants.MatchResultCollectionName + "_01");
+			mongodb.save(matchResult, Constants.MatchResultCollectionName);
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 		}
@@ -224,6 +218,7 @@ public class CalculateTask implements Runnable {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").gte(date));
+		query.sort().on("date", Order.ASCENDING);
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	
@@ -236,9 +231,9 @@ public class CalculateTask implements Runnable {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		
-		String stockCode = "cn_002610";
+		String stockCode = "cn_600803";
 		CalculateTask sm = new CalculateTask(mongodb, null, null);
-		int flag = sm.calculate(stockCode, new DateTime("2013-10-21"));
+		int flag = sm.calculate(stockCode, new DateTime("2013-10-23"));
 		System.out.println(flag);
 	}
 

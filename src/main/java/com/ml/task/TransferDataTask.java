@@ -48,7 +48,8 @@ public class TransferDataTask implements Runnable {
 			for (String date : dataList) {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 				for (String line : stockCodes) {
-					String stockCode = "cn_" + line.substring(2);
+					//String stockCode = "cn_" + line.substring(2);
+					String stockCode = "cn_" + line.split(",")[0];
 					int res = this.transfer(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {

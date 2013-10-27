@@ -10,8 +10,9 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Order;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
@@ -54,9 +55,7 @@ public class CalculateTask implements Runnable {
 			for (String date : dataList) {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
-				for (String line : stockCodes) {
-					//String stockCode = "cn_" + line.substring(2);
-					String stockCode = "cn_" + line.split(",")[0];
+				for (String stockCode : stockCodes) {
 					int res = this.calculate(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {
@@ -80,51 +79,48 @@ public class CalculateTask implements Runnable {
 		try{
 			// 得到目前和一百天前的ScenarioResult
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
-			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
-			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDateSecs, 10, false);
+			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, 120, false);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+			DateTime beforeDate_10 = DateUtil.getIntervalWorkingDay(theDateSecs, 10, false);
 			long beforeDateSecs_10 = DateUtil.getMilliseconds(beforeDate_10);
 			//System.out.println(theDateSecs + "\n" + beforeDateSecs + "\n" + beforeDateSecs_10);
 
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
-			//ScenarioResult beforeDateSR = getQuerySR(stockCode, beforeDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
 			ScenarioResult beforeDateSR_10 = getQueryNearSR(stockCode, beforeDateSecs_10);
-			//if(theDateSR == null || beforeDateSR == null || beforeDateSR_10 == null) return flag;
-			if(theDateSR == null)
-				return flag;
 			//System.out.println(theDateSR + "\n" + beforeDateSR + "\n" + beforeDateSR_10);
+			if(theDateSR == null || beforeDateSR == null || beforeDateSR_10 == null) 
+				return flag;
 			
 			//当前100天平均换手率大于前100天换手率
 			flag = 1;
-			if( theDateSR.getAvgTurnOverRate() <= beforeDateSR.getAvgTurnOverRate() ) {
+			if( theDateSR.getHsl120() <= beforeDateSR.getHsl120() ) {
 				return flag;
 			}
 			
 			//5日，10日均价大于20日均价，20日均价大于30日均价，30日均价大于60日均价
 			//保证股票运行在上升通道中 
 			flag = 2;
-			if( !(theDateSR.getFiveAP() > theDateSR.getTwentyAP() 
-					&& theDateSR.getTenAP() > theDateSR.getTwentyAP() 
-					&& theDateSR.getTwentyAP() > theDateSR.getThirtyAP()
-					&& theDateSR.getThirtyAP() > theDateSR.getSixtyAP()) ) {
+			if( !(theDateSR.getMa5() > theDateSR.getMa10() 
+					&& theDateSR.getMa10() > theDateSR.getMa20() 
+					&& theDateSR.getMa20() > theDateSR.getMa30()
+					&& theDateSR.getMa30() > theDateSR.getMa60()) ) {
 				return flag;
 			}
 			
 			//涨幅不能大于50%
 			flag = 3;
-			if (theDateSR.getTotalChangeRate() >= 50) {
+			if (theDateSR.getUp120() >= 50) {
 				return flag;
 			}
 			
 			//如果近10日平均换手率大于前10日平均换手率，则5日均价必须大于10日均价，当前价格离5日均价不高于3%
 			flag = 4;
-			double nowPrice = theDateSR.getPrice();
-			double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
-			//double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
-			double five_ten_Diff = Math.abs(theDateSR.getFiveAP() - theDateSR.getTenAP()) / theDateSR.getFiveAP();
-			if (theDateSR.getAvgTurnOverRate_10() > beforeDateSR_10.getAvgTurnOverRate_10()) {
-				if (theDateSR.getFiveAP() < theDateSR.getTenAP()) {
+			double nowPrice = theDateSR.getNowPrice();
+			double fiveDiff = Math.abs(nowPrice - theDateSR.getMa5()) / nowPrice;
+			double five_ten_Diff = Math.abs(theDateSR.getMa5() - theDateSR.getMa10()) / theDateSR.getMa5();
+			if (theDateSR.getHsl10() > beforeDateSR_10.getHsl10()) {
+				if (theDateSR.getMa5() < theDateSR.getMa10()) {
 					return flag;
 				}
 				
@@ -140,12 +136,11 @@ public class CalculateTask implements Runnable {
 				}
 				
 				flag = 7;
-				
 				if (fiveDiff > 0.01) {
 					return flag;
 				}
 			}
-			flag = 9;
+			flag = 8;
 			DateTime beforeDate_1 = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
 			long beforeDateSecs_1 = DateUtil.getMilliseconds(beforeDate_1);
 			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);
@@ -154,49 +149,10 @@ public class CalculateTask implements Runnable {
 			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
 			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
 
-			if (!(theDateSR.getFiveAP() > theDateSR_1.getFiveAP() &&
-					theDateSR_1.getFiveAP() > theDateSR_2.getFiveAP())) {
+			if (!(theDateSR.getMa5() > theDateSR_1.getMa5() &&
+					theDateSR_1.getMa5() > theDateSR_2.getMa5())) {
 				return flag;
 			}
-			//对比前100交易日的平均换手率，这100天超过了2倍以上
-			//flag = 2;
-			//if( theDateSR.getTotalChangeRate() >= 50 ) {
-			//	return flag;
-			//}
-			//目前股价在5日、10日附近(2%)			flag = 3;
-			/*if( theDateSR.getAvgTurnOverRate() / beforeDateSR.getAvgTurnOverRate() < 2 ) {
-				return flag;
-			}*/
-			 //目前股价在5日、10日附近(2%)
-			//flag = 4;
-			/*Stock stock = getQueryStock(stockCode, theDateSecs);
-			if(stock == null)
-				return flag;
-			double nowPrice = stock.getOpening();*/
-			//double nowPrice = theDateSR.getPrice();
-			//double fiveDiff = Math.abs(nowPrice - theDateSR.getFiveAP()) / nowPrice;
-			//double tenDiff = Math.abs(nowPrice - theDateSR.getTenAP()) / nowPrice;
-			//System.out.println(fiveDiff + ":" + tenDiff);
-			//if( !(fiveDiff < 0.02 && tenDiff < 0.02 )) {
-			//	return flag;
-			//}
-			//4个均价相差10%以内来代替(基数为4个均价的均值)
-			/*flag = 5;
-			double avgOfAP = (theDateSR.getFiveAP() + theDateSR.getTenAP() +  theDateSR.getTwentyAP() + theDateSR.getThirtyAP()) / 4;
-			double fiveDiffOfAP = Math.abs(avgOfAP - theDateSR.getFiveAP()) / avgOfAP;
-			double tenDiffOfAP = Math.abs(avgOfAP - theDateSR.getTenAP()) / avgOfAP;
-			double twentyDiffOfAP = Math.abs(avgOfAP - theDateSR.getTwentyAP()) / avgOfAP;
-			double thirtyDiffOfAP = Math.abs(avgOfAP - theDateSR.getThirtyAP()) / avgOfAP;
-			if( !(fiveDiffOfAP < 0.1 && tenDiffOfAP < 0.1 && twentyDiffOfAP < 0.1 && thirtyDiffOfAP < 0.1)) {
-				return flag;
-			}*/
-			//5日均价大于10日均价，10日均价大于20均价，20日均价大于30日均价		
-			/*flag = 6;
-			if( !(theDateSR.getFiveAP() > theDateSR.getTenAP() 
-					&& theDateSR.getTenAP() > theDateSR.getTwentyAP() 
-					&& theDateSR.getTwentyAP() > theDateSR.getThirtyAP()) ) {
-				return flag;
-			}*/
 			flag = 9;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
@@ -218,7 +174,7 @@ public class CalculateTask implements Runnable {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").gte(date));
-		query.sort().on("date", Order.ASCENDING);
+		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	

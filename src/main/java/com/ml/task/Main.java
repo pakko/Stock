@@ -10,12 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-
 import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
-import com.ml.model.Stock;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -32,25 +28,21 @@ public class Main {
 		// stock codes
 		List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		System.out.println("Corp code size: " + stockCodes.size());
+				
+		String beginDate = "2012-01-01";
+		String endDate = "2013-10-25";
+		String retrieveType = "fq";	//last or fq, fq mean 'fu quan'
+		boolean isLatest = false;		// true only get the latest one
 		
-		String beginDate = "2013-10-24";
-		String endDate = "2013-10-24";
-	    
-		Query query = new Query();
-		query.addCriteria(Criteria.where("code").is("cn_600000"));
-		query.addCriteria(Criteria.where("date").is(DateUtil.getMilliseconds(endDate)));
-		Stock stock = mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
-		if(stock == null) {
-			InitiateDatasets.retrieveStocks(beginDate, endDate, mongodb, stockCodes);
-			InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
-		}
+		//InitiateDatasets.retrieveStocks(mongodb, stockCodes, retrieveType, isLatest);
+		//InitiateDatasets.retrieveShareCapital(mongodb, stockCodes);
+		InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
 		
-		int cmd = 1;
+		int cmd = 3;
 		if(cmd == 1) {
-			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
+			List<String> dates = DateUtil.getWorkingDays(null, null);
 			//dates = DateUtil.truncateDateList(dates, beginDate, Constants.BaseDays);
 			List<List<String>> dataList = DateUtil.splitList(dates, 50);
-			System.out.println(dataList);
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			for (List<String> data : dataList) {
 				CalculateTask ct = new CalculateTask(mongodb, stockCodes, data);
@@ -61,12 +53,10 @@ public class Main {
 		else if(cmd == 2) {
 			List<MatchResult> matches = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
 			Collections.sort(matches, new Comparator<MatchResult>() {
-
 				@Override
 				public int compare(MatchResult o1, MatchResult o2) {
 					return o1.getDate() > o2.getDate() ? 1 : (o1.getDate() == o2.getDate() ? 0 : -1);
 				}
-				
 			});
 			for(MatchResult match: matches) {
 				System.out.println(match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));

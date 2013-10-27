@@ -5,21 +5,21 @@ import hirondelle.date4j.DateTime;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Order;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
 import com.ml.model.ScenarioResult;
+import com.ml.model.ShareCapital;
 import com.ml.model.Stock;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
@@ -47,9 +47,7 @@ public class TransferDataTask implements Runnable {
 			logger.info("begin to run transfer: " + dataList.size());
 			for (String date : dataList) {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
-				for (String line : stockCodes) {
-					//String stockCode = "cn_" + line.substring(2);
-					String stockCode = "cn_" + line.split(",")[0];
+				for (String stockCode : stockCodes) {
 					int res = this.transfer(stockCode, new DateTime(date));
 					Integer tmp = stats.get(res);
 					if(tmp == null) {
@@ -75,8 +73,8 @@ public class TransferDataTask implements Runnable {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		TransferDataTask rdt = new TransferDataTask(mongodb, null, null);
-		String stockCode = "cn_000553";
-		rdt.transfer(stockCode, new DateTime("2013-10-17"));
+		String stockCode = "sz002306";
+		rdt.transfer(stockCode, new DateTime("2013-10-24"));
 	}
 	/*
 	 * steps: 
@@ -92,103 +90,75 @@ public class TransferDataTask implements Runnable {
 
 			Stock theDateStock = getQueryStock(stockCode, theDateSecs);
 			Stock beforeDateStock = getQueryNearStock(stockCode, beforeDateSecs);
-			
 			flag = 1;
-			if(theDateStock == null || beforeDateStock == null)
+			if(theDateStock == null || beforeDateStock == null) {
+				//logger.warn("Stock code: " + stockCode + ", date: " + theDate + " theDateStock: " + theDateStock + ", beforeDateStock: " + beforeDateStock);
 				return flag;
-			
-			//get 100 days' stock data
-			Query query = new Query();
-			query.addCriteria(Criteria.where("code").is(stockCode));
-			query.addCriteria(Criteria.where("date").gte(beforeDateStock.getDate()).lte(theDateSecs));
-			List<Stock> stockList = mongodb.find(query, Stock.class, Constants.StockCollectionName);
-			int stockSize = stockList.size();
+			}
 
+			//get 250 days' stock data
+			List<Stock> stockList = getQueryBetweenStocks(stockCode, beforeDateStock.getDate(), theDateSecs);
+			int stockSize = stockList.size();
 			flag = 2;
-			if( !(stockSize > 0 && stockSize > Constants.BaseDays / 2.0))
+			//ignore the data size less than half of 250
+			if( !(stockSize > 0 && stockSize > Constants.BaseDays / 2.0)) {
+				//logger.warn("Stock code: " + stockCode + ", date: " + theDate + ", stockSize: " + stockSize + " is two small");
 				return flag;
-			flag = 3;
+			}
+			
 			//the present stock price
-			double stockPrice = stockList.get(0).getClose();
+			double stockPrice = theDateStock.getClose();
 			
-			//1, calculate turnOverRate and totalChangeRate
-			double turnOverRate = 0.0;
-			double totalChangeRate = 0.0;
-			for(Stock stock: stockList) {
-				totalChangeRate += stock.getChangeRate();
-				turnOverRate += stock.getTurnOverRate();
+			//ltp
+			ShareCapital sc = getQueryShareCapital(stockCode, theDateSecs);
+			flag = 3;
+			if(sc == null) {
+				logger.warn("Stock code: " + stockCode + ", date: " + theDate + " has no share capital");
+				return flag;
 			}
-			turnOverRate = turnOverRate / stockSize;
+			double ltp = sc.getTradableShare();
 			
-			//5日换手率
-			double avgTurnOverRate_5 = 0.0;
-			if (stockList.size() >= 5) {
-				for (int i = 0; i < 5; i++) {
-					avgTurnOverRate_5 += stockList.get(i).getTurnOverRate();
-				}
-				
-				avgTurnOverRate_5 = avgTurnOverRate_5 / 5;
-			}
+			//1, calculate average price
+			double ma5 = theDateStock.getMa5();
+			double ma10 = theDateStock.getMa10();
+			double ma20 = theDateStock.getMa20();
+			double ma30 = getDaysOfAveragePrice(stockList, 30);
+			double ma60 = getDaysOfAveragePrice(stockList, 60);
+			double ma120 = getDaysOfAveragePrice(stockList, 120);
+			double ma250 = getDaysOfAveragePrice(stockList, stockSize);		//for 250 days' data not enough
 			
-			//10日换手率
-			double avgTurnOverRate_10 = 0.0;
-			if (stockList.size() >= 10) {
-				for (int i = 0; i < 10; i++) {
-					avgTurnOverRate_10 += stockList.get(i).getTurnOverRate();
-				}
-				
-				avgTurnOverRate_10 = avgTurnOverRate_10 / 10;
-			}
+			//2, calculate hsl
+			double hsl5 = getDaysOfTurnOverRate(stockList, 5);
+			double hsl10 = getDaysOfTurnOverRate(stockList, 10);
+			double hsl20 = getDaysOfTurnOverRate(stockList, 20);
+			double hsl30 = getDaysOfTurnOverRate(stockList, 30);
+			double hsl60 = getDaysOfTurnOverRate(stockList, 60);
+			double hsl120 = getDaysOfTurnOverRate(stockList, 120);
+			double hsl250 = getDaysOfTurnOverRate(stockList, stockSize);	//for 250 days' data not enough
+
+			//3, calculate up
+			double up5 = getDaysOfUp(stockList, 5);
+			double up10 = getDaysOfUp(stockList, 10);
+			double up20 = getDaysOfUp(stockList, 20);
+			double up30 = getDaysOfUp(stockList, 30);
+			double up60 = getDaysOfUp(stockList, 60);
+			double up120 = getDaysOfUp(stockList, 120);
+			double up250 = getDaysOfUp(stockList, stockSize);	//for 250 days' data not enough
 			
-			//20日换手率
-			double avgTurnOverRate_20 = 0.0;
-			if (stockList.size() >= 20) {
-				for (int i = 0; i < 20; i++) {
-					avgTurnOverRate_20 += stockList.get(i).getTurnOverRate();
-				}
-				
-				avgTurnOverRate_20 = avgTurnOverRate_20 / 20;
-			}
-			
-			//30日换手率
-			double avgTurnOverRate_30 = 0.0;
-			if (stockList.size() >= 30) {
-				for (int i = 0; i < 30; i++) {
-					avgTurnOverRate_30 += stockList.get(i).getTurnOverRate();
-				}
-				
-				avgTurnOverRate_30 = avgTurnOverRate_30 / 30;
-			}
-			
-			//60日换手率
-			double avgTurnOverRate_60 = 0.0;
-			if (stockList.size() >= 60) {
-				for (int i = 0; i < 60; i++) {
-					avgTurnOverRate_60 += stockList.get(i).getTurnOverRate();
-				}
-				
-				avgTurnOverRate_60 = avgTurnOverRate_60 / 60;
-			}
-			
-			//2, calculate average price
-			double fiveAP = getDaysOfAveragePrice(stockList, 5);
-			double tenAP = getDaysOfAveragePrice(stockList, 10);
-			double twentyAP = getDaysOfAveragePrice(stockList, 20);
-			double thirdtyAP = getDaysOfAveragePrice(stockList, 30);
-			double sixtyAP = getDaysOfAveragePrice(stockList, 60);
-			
-			//3, save results
-			ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice,
-					turnOverRate, totalChangeRate, fiveAP, tenAP, twentyAP, thirdtyAP,
-					sixtyAP, avgTurnOverRate_5, avgTurnOverRate_10, avgTurnOverRate_20,
-					avgTurnOverRate_30, avgTurnOverRate_60);
+			//4, save results
+			ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice, ltp,
+					ma5, ma10, ma20, ma30, ma60, ma120, ma250,
+					hsl5, hsl10, hsl20, hsl30, hsl60, hsl120, hsl250,
+					up5, up10, up20, up30, up60, up120, up250);
 			mongodb.save(smr, Constants.ScenarioResultCollectionName);
+			flag = 4;
 		} catch(Exception e) {
 			logger.error("Error on transfer: " + e.getMessage());
+			e.printStackTrace();
 		}
 		return flag;
 	}
-	
+
 	private Stock getQueryStock(String stockCode, long date) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
@@ -200,28 +170,154 @@ public class TransferDataTask implements Runnable {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").gte(date));
-		query.sort().on("date", Order.ASCENDING);
+		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
 		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
 	}
 	
-	private List<Stock> getDaysOfData(List<Stock> stockList, int days) {
-		List<Stock> stocks = new ArrayList<Stock>(days);
-		int i = 0;
-		Iterator<Stock> it = stockList.iterator();
-		while(it.hasNext() && i < days) {
-			stocks.add(it.next());
-			i++;
+	private List<Stock> getQueryBetweenStocks(String stockCode, long beginDate, long endDate) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").gte(beginDate).lte(endDate));
+		query.with(new Sort(new Sort.Order(Direction.DESC, "date")));
+		return mongodb.find(query, Stock.class, Constants.StockCollectionName);
+	}
+	
+	private ShareCapital getQueryShareCapital(String stockCode, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.with(new Sort(new Sort.Order(Direction.DESC, "date")));
+		List<ShareCapital> scs = mongodb.find(query, ShareCapital.class, 
+				Constants.ShareCapitalCollectionName);
+		int size = scs.size();
+		if(size <= 0)
+			return null;
+		for(int i = 0; i < size; i++) {
+			long diff = date - scs.get(i).getDate();
+			if(diff > 0)
+				return scs.get(i);
 		}
-		return stocks;
+		return scs.get(size - 1);
 	}
 	
 	private double getDaysOfAveragePrice(List<Stock> stockList, int days) {
-		List<Stock> stocks = this.getDaysOfData(stockList, days);
 		double ap = 0.0;
-		for(Stock stock: stocks) {
-			ap += stock.getClose();
+		if (stockList.size() >= days) {
+			for (int i = 0; i < days; i++) {
+				ap += stockList.get(i).getClose();
+			}
+			ap = ap / days;
 		}
-		return ap / days;
+		return ap;
+	}
+	
+	private double getDaysOfTurnOverRate(List<Stock> stockList, int days) {
+		double avgTurnOverRate = 0.0;
+		if (stockList.size() >= days) {
+			for (int i = 0; i < days; i++) {
+				avgTurnOverRate += stockList.get(i).getTurnOverRate();
+			}
+			avgTurnOverRate = avgTurnOverRate / days;
+		}
+		return avgTurnOverRate;
+	}
+	
+
+	
+	private double getDaysOfUp(List<Stock> stockList, int days) {
+		double up = 0.0;
+		if (stockList.size() >= days) {
+			for (int i = 0; i < days; i++) {
+				up += stockList.get(i).getChangeRate();
+			}
+			up = up / days;
+		}
+		return up;
 	}
 
+	/*
+	 * var mapFunction = function() {
+	var key = this.code;
+	var value = {
+		date: this.date,
+		nowPrice: this.close,
+		close: this.close,
+		ma5: this.ma5
+	};
+	emit( key, value );
+};
+
+var reduceFunction = function(key, values) {
+	var reducedObject = {
+		code: key,
+		ma250: 0
+	};
+	print(values.length);
+	values.forEach( function(value) {
+		reducedObject.ma250 += value.close;
+	});
+	return reducedObject;
+};
+
+var finalizeFunction = function (key, reducedValue) {
+	if (reducedValue.count > 0)
+		reducedValue.ma250 = reducedValue.ma250 / reducedValue.count;
+
+	return reducedValue;
+};
+
+var v_ltp = {ltp: 2013};
+db.stock.mapReduce( 
+	function() {
+		var key = this.code;
+		var value = {
+			date: this.date,
+			nowPrice: this.close,
+			ma5: this.ma5,
+			count: 1
+		};
+		emit( key, value );
+	},
+	function(key, values) {
+		var reducedObject = {
+			code: key,
+			ma250: 0,
+			nowPrice: 0,
+			count: 0,
+			date: 0
+		};
+		print(values.length);
+		values.forEach( function(value) {
+			if(reducedObject.date < value.date)
+				reducedObject.date = value.date
+			reducedObject.ma250 += value.nowPrice;
+			reducedObject.count += value.count
+		});
+		return reducedObject;
+	},
+	{
+	 query: { code: "sz002306", date: { $gte: 1349712000000, $lte: 1382544000000 } },
+	 sort:  { code: -1, date: -1},
+	 out:   { merge: "test" },
+	 finalize: function (key, reducedValue) {
+		if(reducedValue.count > 0)
+			reducedValue.ma250 = reducedValue.ma250 * 1.0 / reducedValue.count;
+
+		return reducedValue;
+	}
+});
+ scope: { v_ltp: v_ltp },
+ db.stock.find({date: { $gte: 1349712000000, $lte: 1382630400000}}).sort({ code: -1, date: -1});
+
+ 	reducedObject.date = value.date;
+	reducedObject.nowPrice = value.nowPrice;
+	reducedObject.ma5 = value.ma5;
+ var reducedObject = {
+		code: key,
+		date: 0,
+		nowPrice: 0,
+		ltp: v_ltp.ltp,
+		ma5: 0,
+		ma250: 0
+	};
+	 */
 }

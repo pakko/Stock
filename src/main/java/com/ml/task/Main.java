@@ -16,6 +16,7 @@ import com.ml.model.MatchResult;
 import com.ml.strategy.Context;
 import com.ml.strategy.Strategy;
 import com.ml.strategy.StrategyA;
+import com.ml.strategy.StrategyB;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -55,10 +56,12 @@ public class Main {
         else if(cmd == 4) {
 			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 			List<List<String>> dataList = DateUtil.splitList(dates, 50);
+			if(dataList.size() <= 0)
+				return;
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			
 			//strategy model
-			Strategy strategy = new StrategyA(mongodb);
+			Strategy strategy = new StrategyB(mongodb);
 			Context context = new Context(strategy);
 	        
 			for (List<String> data : dataList) {

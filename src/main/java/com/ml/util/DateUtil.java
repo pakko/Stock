@@ -158,6 +158,8 @@ public class DateUtil {
 	
 	private static long getDaysBetween(DateTime startDate, DateTime endDate) {
 		long diff = getMilliseconds(endDate) - getMilliseconds(startDate);
+		if(diff == 0)
+			return 1;
 		return diff / (1000*3600*24);
 	}
 

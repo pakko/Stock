@@ -10,8 +10,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+
 import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
+import com.ml.strategy.Context;
+import com.ml.strategy.Strategy;
+import com.ml.strategy.StrategyA;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -26,31 +30,43 @@ public class Main {
 		MongoDB mongodb = new MongoDB(props);
 		
 		// stock codes
+		//List<String> stockCodes = FileUtils.readLines(new File(args[1]));
 		List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		System.out.println("Corp code size: " + stockCodes.size());
 				
-		String beginDate = "2012-01-01";
-		String endDate = "2013-10-25";
-		String retrieveType = "fq";	//last or fq, fq mean 'fu quan'
-		boolean isLatest = false;		// true only get the latest one
+		String beginDate = props.getProperty("beginDate");
+		String endDate = props.getProperty("endDate");
+		String retrieveType = props.getProperty("retrieveType");
+        boolean isLatest = Boolean.valueOf(props.getProperty("isLatest"));
+        
+        //beginDate = "2012-01-01";
+		//endDate = "2013-10-25";
+		//retrieveType = "fq";	//last or fq, fq mean 'fu quan'
+		//isLatest = false;		// true only get the latest one
 		
-		//InitiateDatasets.retrieveStocks(mongodb, stockCodes, retrieveType, isLatest);
-		//InitiateDatasets.retrieveShareCapital(mongodb, stockCodes);
-		InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
-		
-		int cmd = 3;
-		if(cmd == 1) {
-			List<String> dates = DateUtil.getWorkingDays(null, null);
-			//dates = DateUtil.truncateDateList(dates, beginDate, Constants.BaseDays);
+        int cmd = Integer.valueOf(props.getProperty("cmd"));
+        if(cmd == 1) {
+        	InitiateDatasets.retrieveStocks(mongodb, stockCodes, retrieveType, isLatest);
+        } else if(cmd == 2) {
+        	InitiateDatasets.retrieveShareCapital(mongodb, stockCodes);
+        } else if(cmd == 3) {
+        	InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
+        }
+        else if(cmd == 4) {
+			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 			List<List<String>> dataList = DateUtil.splitList(dates, 50);
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
+			
+			//strategy model
+			Strategy strategy = new StrategyA(mongodb);
+			Context context = new Context(strategy);
+	        
 			for (List<String> data : dataList) {
-				CalculateTask ct = new CalculateTask(mongodb, stockCodes, data);
+				CalculateTask ct = new CalculateTask(stockCodes, data, context);
 				executor.submit(ct);
 			}
 			executor.shutdown();
-		}
-		else if(cmd == 2) {
+		} else if(cmd == 5) {
 			List<MatchResult> matches = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
 			Collections.sort(matches, new Comparator<MatchResult>() {
 				@Override

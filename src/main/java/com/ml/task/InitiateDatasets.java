@@ -40,6 +40,8 @@ public class InitiateDatasets {
 			MongoDB mongodb, List<String> stockCodes) {
 		// get data for transferDataTask
 		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
+		if(dates.size() <= 0)
+			return;
 		List<List<String>> dateList = DateUtil.splitList(dates, 50);
 		ExecutorService transferDataExecutor = Executors.newFixedThreadPool(dateList.size());
 		for (List<String> date : dateList) {

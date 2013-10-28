@@ -24,13 +24,15 @@ public class DateUtil {
 	private static TimeZone timeZone = TimeZone.getTimeZone("GMT+8");
 
 	public static void main(String[] args) {
-		String beginDate = "2012-01-01";
-		String endDate = "2013-10-20";
-		List<String[]> splitDates = getSplitDates(beginDate, endDate, 100);
-		for(String[] dates: splitDates) {
-			System.out.println(dates[0] + ":" + dates[1]);
-		}
-		//getWorkingDays(beginDate, endDate);
+		String beginDate = "2013-01-01";
+		String endDate = "2013-10-27";
+		
+		long days = getDaysBetween(new DateTime(beginDate), new DateTime(endDate));
+		System.out.println("days: " + days);
+		long theDateSecs = getMilliseconds(endDate);
+		DateTime beforeDate_1 = getIntervalWorkingDay(theDateSecs, 1, true);
+		System.out.println("before: " + beforeDate_1);
+
 
 	}
 	
@@ -45,45 +47,6 @@ public class DateUtil {
 	
 	public static long getMilliseconds(DateTime date) {
 		return date.getMilliseconds(timeZone);
-	}
-	
-	public static List<String> truncateDateList(List<String> dateList, String dateStr, int interval) {
-		DateTime date = DateUtil.getIntervalWorkingDay(getMilliseconds(dateStr), interval, true);
-		String dateFormat = date.format(FORMAT_PATTERN);
-		return dateList.subList(dateList.indexOf(dateFormat), dateList.size() - 1);
-	}
-	
-	public static List<String[]> getSplitDates(String startDateStr, String endDateStr, int splitSize) {
-		DateTime startDate = new DateTime(startDateStr);
-		DateTime endDate = new DateTime(endDateStr);
-		
-		//get holidays
-		//List<String> holidays = getHolidaysAndWeekends(2013);
-
-		//calculate days
-		long days = getDaysBetween(startDate, endDate);
-		//System.out.println("days: " + days);
-		
-		//get working days
-		List<String> dateList = new ArrayList<String>();
-		for(int i = 0; i < days; i++) {
-			String date = startDate.format(FORMAT_PATTERN);
-			/*boolean isHoliday = validate(date, holidays);
-			if(!isHoliday){
-				dateList.add(date);
-			}*/
-			dateList.add(date);
-			startDate = startDate.plusDays(1);
-		}
-		
-		//get split days
-		List<String[]> resultList = new ArrayList<String[]>();
-		List<List<String>> splits = splitList(dateList, splitSize);
-		for(List<String> split: splits) {
-			//only get the first and the last one
-			resultList.add(new String[] {split.get(0), split.get(split.size() - 1)});
-		}
-		return resultList;
 	}
 	
 	public static <T> List<List<T>> splitList(List<T> list, int splitSize) {
@@ -131,36 +94,49 @@ public class DateUtil {
 	}
 	
 	public static DateTime getIntervalWorkingDay(long startDateSecs, int interval, boolean isNext) {
+		int times = interval > 5 ? interval * 2 : interval * 10;	//expand
 		DateTime startDate = getDateByMilliseconds(startDateSecs);
-		DateTime endDate = isNext ? startDate.plusDays(interval * 2) : startDate.minusDays(interval * 2);
+		DateTime endDate = isNext ? startDate.plusDays(times) : startDate.minusDays(times);
 		
-		//get holidays
+		List<String> days;
 		List<String> holidays;
+		String starDateStr = startDate.format(FORMAT_PATTERN);
+		String endDateStr = endDate.format(FORMAT_PATTERN);
 		if(getMilliseconds(endDate) < getMilliseconds(startDate)) {
+			days = getWorkingDays(endDateStr, starDateStr);
 			holidays = getHolidaysAndWeekendsByRange(endDate, startDate);
 		}
 		else {
+			days = getWorkingDays(starDateStr, endDateStr);
 			holidays = getHolidaysAndWeekendsByRange(startDate, endDate);
 		}
+		int index = isNext ? interval : (days.size() - interval - 1);
+		boolean isHoliday = validate(starDateStr, holidays);
+		if(isHoliday)
+			index = isNext ? index - 1 : index + 1;
+		return new DateTime(days.get(index));
+	}
+	
+	public static DateTime getBeforeWorkingDay(long startDateSecs, int interval) {
+		int times = interval > 5 ? interval * 2 : interval * 10;	//expand
+		DateTime startDate = getDateByMilliseconds(startDateSecs);
+		DateTime endDate = startDate.minusDays(times);
 		
-		//get working days
-		while(interval > 0) {
-			String date = startDate.format(FORMAT_PATTERN);
-			boolean isHoliday = validate(date, holidays);
-			if(!isHoliday){
-				interval--;
-			}
-			startDate = isNext ? startDate.plusDays(1) : startDate.minusDays(1);
-		}
-		//return isNext ? startDate.minusDays(1) : startDate.plusDays(1);
-		return startDate;
+		String starDateStr = startDate.format(FORMAT_PATTERN);
+		String endDateStr = endDate.format(FORMAT_PATTERN);
+		List<String> days = getWorkingDays(endDateStr, starDateStr);
+		List<String> holidays = getHolidaysAndWeekendsByRange(endDate, startDate);
+		
+		int index = days.size() - interval - 1;
+		boolean isHoliday = validate(starDateStr, holidays);
+		if(isHoliday)
+			index += 1;
+		return new DateTime(days.get(index));
 	}
 	
 	private static long getDaysBetween(DateTime startDate, DateTime endDate) {
 		long diff = getMilliseconds(endDate) - getMilliseconds(startDate);
-		if(diff == 0)
-			return 1;
-		return diff / (1000*3600*24);
+		return diff / (1000*3600*24) + 1;
 	}
 
 	private static List<String> getHolidaysAndWeekendsByRange(DateTime startDate, DateTime endDate) {

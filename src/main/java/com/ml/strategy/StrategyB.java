@@ -43,21 +43,20 @@ public class StrategyB implements Strategy {
 		try{
 			// 得到目前和120天前的ScenarioResult		
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
-			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, 120, false);
 			
-			DateTime beforeDate_1 = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
-			long beforeDateSecs_1 = DateUtil.getMilliseconds(beforeDate_1);
-			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);	
-			
+			DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDateSecs, 120);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+
+			DateTime beforeDate_1 = DateUtil.getBeforeWorkingDay(theDateSecs, 1);
+			long beforeDateSecs_1 = DateUtil.getMilliseconds(beforeDate_1);
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
-			
-			//if(theDateSR == null || beforeDateSR == null || theDateSR_1 == null)
-			//if(theDateSR == null)
-			//	return flag;
-			System.out.println(theDateSR + "_" + beforeDateSR + "_" + theDateSR_1);
+			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);	
+
+			if(theDateSR == null || beforeDateSR == null || theDateSR_1 == null)
+				return flag;
+			//System.out.println(theDateSR + "_" + beforeDateSR + "_" + theDateSR_1);
 			
 			//当前120天平均换手率大于前120天换手率2倍以上
 			flag = 1;
@@ -112,18 +111,22 @@ public class StrategyB implements Strategy {
 			
 			//比较斜率
 			flag = 8;
-			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
+			DateTime beforeDate_2 = DateUtil.getBeforeWorkingDay(theDateSecs, 2);
 			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
 			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
 			
-			DateTime beforeDate_3 = DateUtil.getIntervalWorkingDay(beforeDateSecs_2, 1, false);
+			DateTime beforeDate_3 = DateUtil.getBeforeWorkingDay(theDateSecs, 3);
 			long beforeDateSecs_3 = DateUtil.getMilliseconds(beforeDate_3);
 			ScenarioResult theDateSR_3 = getQuerySR(stockCode, beforeDateSecs_3);
 			
-			DateTime beforeDate_4 = DateUtil.getIntervalWorkingDay(beforeDateSecs_3, 1, false);
+			DateTime beforeDate_4 = DateUtil.getBeforeWorkingDay(theDateSecs, 4);
 			long beforeDateSecs_4 = DateUtil.getMilliseconds(beforeDate_4);
 			ScenarioResult theDateSR_4 = getQuerySR(stockCode, beforeDateSecs_4);
 			
+			if(theDateSR_2 == null || theDateSR_3 == null || theDateSR_4 == null)
+				return flag;
+			
+			flag = 9;
 			double xl1 = theDateSR.getMa5() - theDateSR_1.getMa5();
 			double xl2 = theDateSR_1.getMa5() - theDateSR_2.getMa5();
 			double xl3 = theDateSR_2.getMa5() - theDateSR_3.getMa5();
@@ -133,7 +136,7 @@ public class StrategyB implements Strategy {
 				return flag;
 			}
 			
-			flag = 9;
+			flag = 10;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
 			mongodb.save(matchResult, Constants.MatchResultCollectionName);

@@ -85,7 +85,7 @@ public class TransferDataTask implements Runnable {
 		int flag = 0;
 		try{
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
-			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, Constants.BaseDays, false);
+			DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDateSecs, Constants.BaseDays);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 
 			Stock theDateStock = getQueryStock(stockCode, theDateSecs);

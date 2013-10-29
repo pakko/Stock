@@ -1,21 +1,30 @@
 package com.ml.task;
 
+import hirondelle.date4j.DateTime;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
+import com.ml.model.Stock;
 import com.ml.strategy.Context;
 import com.ml.strategy.Strategy;
-import com.ml.strategy.StrategyA;
 import com.ml.strategy.StrategyB;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
@@ -77,9 +86,61 @@ public class Main {
 					return o1.getDate() > o2.getDate() ? 1 : (o1.getDate() == o2.getDate() ? 0 : -1);
 				}
 			});
+			int i = 0;
+			Map<String, List<DateTime>> stat = new HashMap<String, List<DateTime>>();
 			for(MatchResult match: matches) {
-				System.out.println(match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
+				int res = compareMatch(mongodb, match.getCode(), match.getDate());
+				if(res == 1) {
+					//System.out.println("Good: " + match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
+					i++;
+					List<DateTime> dates = stat.get(match.getCode());
+					if(dates == null) {
+						dates = new ArrayList<DateTime>();
+					}
+					dates.add(DateUtil.getDateByMilliseconds(match.getDate()));
+					stat.put(match.getCode(), dates);
+				}
+				else {
+					//System.out.println("Bad: " + match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
+				}
+			}
+			System.out.println("Good size: " + i );
+			for(String key: stat.keySet()) {
+				List<DateTime> dates = stat.get(key);
+				Collections.sort(dates, new Comparator<DateTime>() {
+					@Override
+					public int compare(DateTime o1, DateTime o2) {
+						return DateUtil.getMilliseconds(o1) > DateUtil.getMilliseconds(o2) ? -1 
+								: (DateUtil.getMilliseconds(o1) == DateUtil.getMilliseconds(o2) ? 0 : 1);
+					}
+				});
+				System.out.println(key + ": " + dates);
+			}
+			
+
+		}
+        
+	}
+	private static int compareMatch(MongoDB mongodb, String stockCode, long theDate) {
+		DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDate, 5);
+		long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+		List<Stock> stockList = getQueryBetweenStocks(mongodb, stockCode, beforeDateSecs, theDate);
+		double nowPrice = stockList.get(0).getClose();
+		for(int i = 1; i < stockList.size(); i++) {
+			if(nowPrice < stockList.get(i).getClose()) {
+				return 1;
 			}
 		}
+		return 0;
+
+	}
+	
+	private static List<Stock> getQueryBetweenStocks(MongoDB mongodb, String stockCode, 
+			long beginDate, long endDate) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").gte(beginDate).lte(endDate));
+		query.with(new Sort(new Sort.Order(Direction.DESC, "date")));
+		return mongodb.find(query, Stock.class, Constants.StockCollectionName);
 	}
 }

@@ -9,65 +9,69 @@ import com.ml.model.ScenarioResult;
 import com.ml.util.DateUtil;
 
 
-public class StrategyB extends AbstractStrategy {
+public class StrategyC extends AbstractStrategy {
 
 	/*
 	 * 1. 计算120天内的平均换手率
 	 * 2. 计算前120天内的平均换手率
-	 * 3. 120天内平均换手率大于前120天换手率(幅度2倍以上)
-	 * 3. 计算5日，10日，20日，30日，60日均价
-	 * 4. 5日和10日均价大于等于20日均价，20日均价大于等于30日均价，30日均价大于等于60日均价
-	 * 5. 120日内涨幅小于等于50%
+	 * 3. 120天内平均换手率大于前120天换手率
+	 * 3. 计算5日，10日，20日，30日
+	 * 4. 5日均价大于10日均价，10日均价大于等于20日均价，20日均价大于等于30日均价
+	 * 5. 120日内涨幅小于等于30%
 	 * 6. 5日，10日，20日，30日均价相差在10%以内
 	 * 7. 5日，10日均价相差在2%以内
-	 * 8. 计算近几天5日均线斜率是否有增大趋势
+	 * 8. 连续三天收盘价在5日均线之上
+	 * 9。 20天上涨幅度小于20%
 	 * 
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(StrategyB.class);
+	private static final Logger logger = LoggerFactory.getLogger(StrategyC.class);
 
-	public StrategyB(MongoDB mongodb) {
+	public StrategyC(MongoDB mongodb) {
 		super(mongodb);
 	}
 	
-    public int calculate(String stockCode, String theDate) {
-    	int flag = 0;
+	public int calculate(String stockCode, String theDate) {
+		int flag = 0;
 		try{
 			// 得到目前和120天前的ScenarioResult		
 			long theDateSecs = DateUtil.getMilliseconds(theDate);
-			
-			DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDateSecs, 120);
-			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-
-			DateTime beforeDate_1 = DateUtil.getBeforeWorkingDay(theDateSecs, 1);
+			DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDateSecs, 120, false);
+			DateTime beforeDate_1 = DateUtil.getIntervalWorkingDay(theDateSecs, 1, false);
+			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(theDateSecs, 2, false);
 			long beforeDateSecs_1 = DateUtil.getMilliseconds(beforeDate_1);
+			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
+			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);
+			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
+			
+			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
-			ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);	
-
+			
 			if(theDateSR == null || beforeDateSR == null || theDateSR_1 == null)
 				return flag;
-			//System.out.println(theDateSR + "_" + beforeDateSR + "_" + theDateSR_1);
-			
-			//当前120天平均换手率大于前120天换手率2倍以上
+			System.out.println(theDateSR);
+			System.out.println(theDateSR_1);
+			System.out.println(theDateSR_2);
+
+			//当前120天平均换手率大于前120天换手率
 			flag = 1;
-			if( (theDateSR.getHsl120() / beforeDateSR.getHsl120()) < 2 ) {
+			if( theDateSR.getHsl120() < beforeDateSR.getHsl120()) {
 				return flag;
 			}
 			
-			//5日，10日均价大于等于20日均价，20日均价大于 等于30日均价，30日均价大于等于60日均价
+			//5日，10日均价大于等于20日均价，20日均价大于 等于30日均价
 			//保证股票运行在上升通道中 
 			flag = 2;
 			if( !(theDateSR.getMa5() >= theDateSR.getMa10()
 					&& theDateSR.getMa10() >= theDateSR.getMa20() 
-					&& theDateSR.getMa20() >= theDateSR.getMa30()
-					&& theDateSR.getMa30() >= theDateSR.getMa60()) ) {
+					&& theDateSR.getMa20() >= theDateSR.getMa30()) ) {
 				return flag;
 			}
 			
-			//涨幅不能大于50%
+			//120日涨幅不能大于30%
 			flag = 3;
-			if (theDateSR.getUp120() >= 50) {
+			if (theDateSR.getUp120() >= 30) {
 				return flag;
 			}
 			
@@ -100,24 +104,34 @@ public class StrategyB extends AbstractStrategy {
 				return flag;
 			}
 			
-			//比较斜率
+			//30日涨幅小于10%
 			flag = 8;
-			DateTime beforeDate_2 = DateUtil.getBeforeWorkingDay(theDateSecs, 2);
+			if (theDateSR.getUp30() > 10) {
+				return flag;
+			}
+			
+			//连续3日收盘价在5日均线之上
+			flag = 9;
+			if (!(theDateSR.getNowPrice() > theDateSR.getMa5() &&
+					theDateSR_1.getNowPrice() > theDateSR_1.getMa5() &&
+					theDateSR_2.getNowPrice() > theDateSR_2.getMa5())) {
+				return flag;
+			}
+			
+			//比较斜率
+			/*flag = 8;
+			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
 			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
 			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
 			
-			DateTime beforeDate_3 = DateUtil.getBeforeWorkingDay(theDateSecs, 3);
+			DateTime beforeDate_3 = DateUtil.getIntervalWorkingDay(beforeDateSecs_2, 1, false);
 			long beforeDateSecs_3 = DateUtil.getMilliseconds(beforeDate_3);
 			ScenarioResult theDateSR_3 = getQuerySR(stockCode, beforeDateSecs_3);
 			
-			DateTime beforeDate_4 = DateUtil.getBeforeWorkingDay(theDateSecs, 4);
+			DateTime beforeDate_4 = DateUtil.getIntervalWorkingDay(beforeDateSecs_3, 1, false);
 			long beforeDateSecs_4 = DateUtil.getMilliseconds(beforeDate_4);
 			ScenarioResult theDateSR_4 = getQuerySR(stockCode, beforeDateSecs_4);
 			
-			if(theDateSR_2 == null || theDateSR_3 == null || theDateSR_4 == null)
-				return flag;
-			
-			flag = 9;
 			double xl1 = theDateSR.getMa5() - theDateSR_1.getMa5();
 			double xl2 = theDateSR_1.getMa5() - theDateSR_2.getMa5();
 			double xl3 = theDateSR_2.getMa5() - theDateSR_3.getMa5();
@@ -125,7 +139,7 @@ public class StrategyB extends AbstractStrategy {
 			
 			if (!(xl1 >0 && xl2 >0 && xl1 > xl2)) {
 				return flag;
-			}
+			}*/
 			
 			flag = 10;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
@@ -135,6 +149,5 @@ public class StrategyB extends AbstractStrategy {
 		}
 		return flag;
 	}
-
 
 }

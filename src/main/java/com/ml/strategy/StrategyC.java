@@ -50,9 +50,6 @@ public class StrategyC extends AbstractStrategy {
 			
 			if(theDateSR == null || beforeDateSR == null || theDateSR_1 == null)
 				return flag;
-			System.out.println(theDateSR);
-			System.out.println(theDateSR_1);
-			System.out.println(theDateSR_2);
 
 			//当前120天平均换手率大于前120天换手率
 			flag = 1;
@@ -117,29 +114,6 @@ public class StrategyC extends AbstractStrategy {
 					theDateSR_2.getNowPrice() > theDateSR_2.getMa5())) {
 				return flag;
 			}
-			
-			//比较斜率
-			/*flag = 8;
-			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
-			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
-			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
-			
-			DateTime beforeDate_3 = DateUtil.getIntervalWorkingDay(beforeDateSecs_2, 1, false);
-			long beforeDateSecs_3 = DateUtil.getMilliseconds(beforeDate_3);
-			ScenarioResult theDateSR_3 = getQuerySR(stockCode, beforeDateSecs_3);
-			
-			DateTime beforeDate_4 = DateUtil.getIntervalWorkingDay(beforeDateSecs_3, 1, false);
-			long beforeDateSecs_4 = DateUtil.getMilliseconds(beforeDate_4);
-			ScenarioResult theDateSR_4 = getQuerySR(stockCode, beforeDateSecs_4);
-			
-			double xl1 = theDateSR.getMa5() - theDateSR_1.getMa5();
-			double xl2 = theDateSR_1.getMa5() - theDateSR_2.getMa5();
-			double xl3 = theDateSR_2.getMa5() - theDateSR_3.getMa5();
-			double xl4 = theDateSR_3.getMa5() - theDateSR_4.getMa5();
-			
-			if (!(xl1 >0 && xl2 >0 && xl1 > xl2)) {
-				return flag;
-			}*/
 			
 			flag = 10;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");

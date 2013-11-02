@@ -25,7 +25,9 @@ import com.ml.model.MatchResult;
 import com.ml.model.Stock;
 import com.ml.strategy.Context;
 import com.ml.strategy.Strategy;
+import com.ml.strategy.StrategyA;
 import com.ml.strategy.StrategyB;
+import com.ml.strategy.StrategyC;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -70,7 +72,7 @@ public class Main {
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			
 			//strategy model
-			Strategy strategy = new StrategyB(mongodb);
+			Strategy strategy = new StrategyC(mongodb);
 			Context context = new Context(strategy);
 	        
 			for (List<String> data : dataList) {
@@ -78,7 +80,12 @@ public class Main {
 				executor.submit(ct);
 			}
 			executor.shutdown();
-		} else if(cmd == 5) {
+        } else if(cmd == 5) {
+        	InitiateDatasets.retrieveRealStock(mongodb, stockCodes);
+        } else if(cmd == 6) {
+        	//retrieve 20 days ddz stock
+        	InitiateDatasets.retrieveDDZStock(mongodb, stockCodes);
+		} else if(cmd == 7) {
 			List<MatchResult> matches = mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
 			Collections.sort(matches, new Comparator<MatchResult>() {
 				@Override
@@ -86,6 +93,7 @@ public class Main {
 					return o1.getDate() > o2.getDate() ? 1 : (o1.getDate() == o2.getDate() ? 0 : -1);
 				}
 			});
+			Map<String, String> map = InitiateDatasets.getStockCodes();
 			int i = 0;
 			Map<String, List<DateTime>> stat = new HashMap<String, List<DateTime>>();
 			for(MatchResult match: matches) {
@@ -114,17 +122,15 @@ public class Main {
 								: (DateUtil.getMilliseconds(o1) == DateUtil.getMilliseconds(o2) ? 0 : 1);
 					}
 				});
-				System.out.println(key + ": " + dates);
+				System.out.println(key + "("+ map.get(key.substring(2)) + "): " + dates);
 			}
-			
-
 		}
         
 	}
 	private static int compareMatch(MongoDB mongodb, String stockCode, long theDate) {
-		DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDate, 5);
-		long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
-		List<Stock> stockList = getQueryBetweenStocks(mongodb, stockCode, beforeDateSecs, theDate);
+		DateTime afterDate = DateUtil.getIntervalWorkingDay(theDate, 5, true);
+		long afterDateSecs = DateUtil.getMilliseconds(afterDate);
+		List<Stock> stockList = getQueryBetweenStocks(mongodb, stockCode, theDate, afterDateSecs);
 		double nowPrice = stockList.get(0).getClose();
 		for(int i = 1; i < stockList.size(); i++) {
 			if(nowPrice < stockList.get(i).getClose()) {
@@ -140,7 +146,7 @@ public class Main {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").gte(beginDate).lte(endDate));
-		query.with(new Sort(new Sort.Order(Direction.DESC, "date")));
+		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
 		return mongodb.find(query, Stock.class, Constants.StockCollectionName);
 	}
 }

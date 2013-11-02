@@ -1,12 +1,26 @@
 package com.ml.task;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 
+
+
+
+
+
+import org.apache.commons.io.FileUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+
 import com.ml.db.MongoDB;
+import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
 public class InitiateDatasets {
@@ -50,6 +64,42 @@ public class InitiateDatasets {
 		}
 		transferDataExecutor.shutdown();
 		waitForComplete(transferDataExecutor, 60 * 2);
+	}
+	
+	public static void retrieveDDZStock(MongoDB mongodb, List<String> stockCodes) {
+		List<List<String>> stockCodeList = DateUtil.splitList(stockCodes, 200);
+		ExecutorService retrieveDataExecutor = Executors.newFixedThreadPool(stockCodeList.size());
+	    for (List<String> subStockCodes: stockCodeList) {
+	    	RetrieveDdzStockDataTask rscdt = new RetrieveDdzStockDataTask(mongodb, subStockCodes);
+			retrieveDataExecutor.submit(rscdt);
+		}
+	    retrieveDataExecutor.shutdown();
+	    
+	    waitForComplete(retrieveDataExecutor, 60 * 2);
+	}
+	
+	public static void retrieveRealStock(MongoDB mongodb, List<String> stockCodes) {
+		List<List<String>> stockCodeList = DateUtil.splitList(stockCodes, 200);
+		ExecutorService retrieveDataExecutor = Executors.newFixedThreadPool(stockCodeList.size());
+	    for (List<String> subStockCodes: stockCodeList) {
+	    	RetrieveRealStockDataTask rscdt = new RetrieveRealStockDataTask(mongodb, subStockCodes);
+			retrieveDataExecutor.submit(rscdt);
+		}
+	    retrieveDataExecutor.shutdown();
+	    
+	    waitForComplete(retrieveDataExecutor, 60 * 2);
+	}
+	
+	public static Map<String, String> getStockCodes() throws IOException {
+		String content = FileUtils.readFileToString(new File(Constants.CECodesFile));
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<List<Object>> lists = objectMapper.readValue(content, 
+					new TypeReference<List<List<Object>>>(){});
+		Map<String, String> map = new HashMap<String, String>(lists.size());
+		for(List<Object> list: lists) {
+			map.put((String) list.get(0), (String) list.get(1));
+		}
+		return map;
 	}
 	
 	private static void waitForComplete(ExecutorService executor, int seconds) {

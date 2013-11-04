@@ -94,7 +94,7 @@ public class DateUtil {
 	}
 	
 	public static DateTime getIntervalWorkingDay(long startDateSecs, int interval, boolean isNext) {
-		int times = interval > 5 ? interval * 2 : interval * 10;	//expand
+		int times = interval > 5 ? interval * 5 : interval * 10;	//expand
 		DateTime startDate = getDateByMilliseconds(startDateSecs);
 		DateTime endDate = isNext ? startDate.plusDays(times) : startDate.minusDays(times);
 		
@@ -118,7 +118,7 @@ public class DateUtil {
 	}
 	
 	public static DateTime getBeforeWorkingDay(long startDateSecs, int interval) {
-		int times = interval > 5 ? interval * 2 : interval * 10;	//expand
+		int times = interval > 5 ? interval * 5 : interval * 10;	//expand
 		DateTime startDate = getDateByMilliseconds(startDateSecs);
 		DateTime endDate = startDate.minusDays(times);
 		

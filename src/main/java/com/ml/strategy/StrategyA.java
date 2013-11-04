@@ -64,7 +64,7 @@ public class StrategyA extends AbstractStrategy {
 			
 			//涨幅不能大于50%
 			flag = 3;
-			if (theDateSR.getUp120() >= 50) {
+			if (theDateSR.getUp120() * 120 >= 50) {
 				return flag;
 			}
 			

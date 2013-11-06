@@ -20,6 +20,9 @@ public class MongoDBPipeline<T> implements Pipeline<T> {
     public void process(List<T> datas) {
     	if(datas == null || datas.size() <= 0)
     		return;
-    	mongodb.insert(datas, collectionName);
+    	for(T data: datas) {
+    		mongodb.save(data, collectionName);
+    	}
+    	
     }
 }

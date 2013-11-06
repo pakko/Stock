@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
+import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
 import com.ml.model.Stock;
 import com.ml.strategy.Context;
@@ -28,6 +29,7 @@ import com.ml.strategy.Strategy;
 import com.ml.strategy.StrategyA;
 import com.ml.strategy.StrategyB;
 import com.ml.strategy.StrategyC;
+import com.ml.strategy.StrategyD;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -72,7 +74,7 @@ public class Main {
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			
 			//strategy model
-			Strategy strategy = new StrategyC(mongodb);
+			Strategy strategy = new StrategyD(mongodb);
 			Context context = new Context(strategy);
 	        
 			for (List<String> data : dataList) {
@@ -97,7 +99,7 @@ public class Main {
 			int i = 0;
 			Map<String, List<DateTime>> stat = new HashMap<String, List<DateTime>>();
 			for(MatchResult match: matches) {
-				int res = compareMatch(mongodb, match.getCode(), match.getDate());
+				int res = compareMatch2(mongodb, match.getCode(), match.getDate());
 				if(res == 1) {
 					//System.out.println("Good: " + match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
 					i++;
@@ -109,9 +111,10 @@ public class Main {
 					stat.put(match.getCode(), dates);
 				}
 				else {
-					//System.out.println("Bad: " + match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
+					System.out.println("Bad: " + match.getCode() + ": " + DateUtil.getDateByMilliseconds(match.getDate()));
 				}
 			}
+			
 			System.out.println("Good size: " + i );
 			for(String key: stat.keySet()) {
 				List<DateTime> dates = stat.get(key);
@@ -139,6 +142,30 @@ public class Main {
 		}
 		return 0;
 
+	}
+	
+	private static int compareMatch2(MongoDB mongodb, String stockCode, long theDate) {
+		DateTime beforeDate = DateUtil.getIntervalWorkingDay(theDate, 20, false);
+		long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
+		List<DdzStock> ddzStockList = getQueryBetweenDDZ(mongodb, stockCode, beforeDateSecs, theDate);
+		double sum = 0.0;
+		for(int i = 1; i < ddzStockList.size(); i++) {
+			DdzStock ds = ddzStockList.get(i);
+			sum += (ds.getIn() + ds.getOut());
+		}
+		if(sum > 0)
+			return 1;
+		return 0;
+
+	}
+	
+	private static List<DdzStock> getQueryBetweenDDZ(MongoDB mongodb, String stockCode, 
+			long beginDate, long endDate) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").gte(beginDate).lte(endDate));
+		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
+		return mongodb.find(query, DdzStock.class, Constants.DDZStockCollectionName);
 	}
 	
 	private static List<Stock> getQueryBetweenStocks(MongoDB mongodb, String stockCode, 

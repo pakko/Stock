@@ -57,7 +57,7 @@ public class StrategyD extends AbstractStrategy {
 			
 			if(theDateSR == null || theDateSR_10 == null || theDateSR_20 == null)
 				return flag;
-			System.out.println(theDateSR + "_" + theDateSR_10 + "_" + theDateSR_10);
+			//System.out.println(theDateSR + "_" + theDateSR_10 + "_" + theDateSR_10);
 			
 			//当前20天平均换手率大于前20天换手率2倍
 			flag = 1;

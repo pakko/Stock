@@ -47,7 +47,6 @@ public class StrategyC extends AbstractStrategy {
 	
 			ScenarioResult theDateSR = getQuerySR(stockCode, theDateSecs);
 			ScenarioResult beforeDateSR = getQueryNearSR(stockCode, beforeDateSecs);
-			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDateSR + " ]");
 
 			if(theDateSR == null || beforeDateSR == null || theDateSR_1 == null)
 				return flag;

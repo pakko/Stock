@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
+import com.ml.model.RealStock;
 import com.ml.model.ScenarioResult;
 import com.ml.model.ShareCapital;
 import com.ml.model.Stock;
@@ -31,12 +32,14 @@ public class TransferDataTask implements Runnable {
 	private MongoDB mongodb;
 	private List<String> stockCodes;
 	private List<String> dataList;
+	private boolean isReal;
 	
 	public TransferDataTask(MongoDB mongodb, List<String> stockCodes, 
-			List<String> dataList) {
+			List<String> dataList, boolean isReal) {
 		this.mongodb = mongodb;
 		this.stockCodes = stockCodes;
 		this.dataList = dataList;
+		this.isReal = isReal;
 	}
 	
 
@@ -72,7 +75,7 @@ public class TransferDataTask implements Runnable {
 		Properties props = new Properties();
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
-		TransferDataTask rdt = new TransferDataTask(mongodb, null, null);
+		TransferDataTask rdt = new TransferDataTask(mongodb, null, null, false);
 		String stockCode = "sz002306";
 		rdt.transfer(stockCode, new DateTime("2013-10-24"));
 	}
@@ -88,14 +91,27 @@ public class TransferDataTask implements Runnable {
 			DateTime beforeDate = DateUtil.getBeforeWorkingDay(theDateSecs, Constants.BaseDays);
 			long beforeDateSecs = DateUtil.getMilliseconds(beforeDate);
 
-			Stock theDateStock = getQueryStock(stockCode, theDateSecs);
-			Stock beforeDateStock = getQueryNearStock(stockCode, beforeDateSecs);
+			double stockPrice;
 			flag = 1;
-			if(theDateStock == null || beforeDateStock == null) {
-				//logger.warn("Stock code: " + stockCode + ", date: " + theDate + " theDateStock: " + theDateStock + ", beforeDateStock: " + beforeDateStock);
+			if(isReal) {
+				RealStock theDateStock = getQueryRealStock(stockCode, theDateSecs);
+				if(theDateStock == null) {
+					return flag;
+				}
+				stockPrice = theDateStock.getClose();
+			}
+			else {
+				Stock theDateStock = getQueryStock(stockCode, theDateSecs);
+				if(theDateStock == null) {
+					return flag;
+				}
+				stockPrice = theDateStock.getClose();
+			}
+			Stock beforeDateStock = getQueryNearStock(stockCode, beforeDateSecs);
+			
+			if(beforeDateStock == null) {
 				return flag;
 			}
-
 			//get 250 days' stock data
 			List<Stock> stockList = getQueryBetweenStocks(stockCode, beforeDateStock.getDate(), theDateSecs);
 			int stockSize = stockList.size();
@@ -105,9 +121,6 @@ public class TransferDataTask implements Runnable {
 				//logger.warn("Stock code: " + stockCode + ", date: " + theDate + ", stockSize: " + stockSize + " is two small");
 				return flag;
 			}
-			
-			//the present stock price
-			double stockPrice = theDateStock.getClose();
 			
 			//ltp
 			ShareCapital sc = getQueryShareCapital(stockCode, theDateSecs);
@@ -119,9 +132,9 @@ public class TransferDataTask implements Runnable {
 			double ltp = sc.getTradableShare();
 			
 			//1, calculate average price
-			double ma5 = theDateStock.getMa5();
-			double ma10 = theDateStock.getMa10();
-			double ma20 = theDateStock.getMa20();
+			double ma5 = getDaysOfAveragePrice(stockList, 5);
+			double ma10 = getDaysOfAveragePrice(stockList, 10);
+			double ma20 = getDaysOfAveragePrice(stockList, 20);
 			double ma30 = getDaysOfAveragePrice(stockList, 30);
 			double ma60 = getDaysOfAveragePrice(stockList, 60);
 			double ma120 = getDaysOfAveragePrice(stockList, 120);
@@ -164,6 +177,14 @@ public class TransferDataTask implements Runnable {
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").is(date));
 		return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+	}
+	
+	private RealStock getQueryRealStock(String stockCode, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").gt(date));
+		query.with(new Sort(new Sort.Order(Direction.DESC, "date")));
+		return mongodb.findOne(query, RealStock.class, Constants.RealStockCollectionName);
 	}
 	
 	private Stock getQueryNearStock(String stockCode, long date) {

@@ -52,7 +52,8 @@ public class Main {
 		String endDate = props.getProperty("endDate");
 		String retrieveType = props.getProperty("retrieveType");
         boolean isLatest = Boolean.valueOf(props.getProperty("isLatest"));
-        
+        boolean isReal = Boolean.valueOf(props.getProperty("isReal"));
+
         //beginDate = "2012-01-01";
 		//endDate = "2013-10-25";
 		//retrieveType = "fq";	//last or fq, fq mean 'fu quan'
@@ -64,7 +65,7 @@ public class Main {
         } else if(cmd == 2) {
         	InitiateDatasets.retrieveShareCapital(mongodb, stockCodes);
         } else if(cmd == 3) {
-        	InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes);
+        	InitiateDatasets.transferStocks(beginDate, endDate, mongodb, stockCodes, isReal);
         }
         else if(cmd == 4) {
 			List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
@@ -74,7 +75,7 @@ public class Main {
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			
 			//strategy model
-			Strategy strategy = new StrategyD(mongodb);
+			Strategy strategy = new StrategyA(mongodb);
 			Context context = new Context(strategy);
 	        
 			for (List<String> data : dataList) {

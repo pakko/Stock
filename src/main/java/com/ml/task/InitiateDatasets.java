@@ -51,7 +51,7 @@ public class InitiateDatasets {
 	}
 	
 	public static void transferStocks(String beginDate, String endDate,
-			MongoDB mongodb, List<String> stockCodes) {
+			MongoDB mongodb, List<String> stockCodes, boolean isReal) {
 		// get data for transferDataTask
 		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 		if(dates.size() <= 0)
@@ -59,7 +59,7 @@ public class InitiateDatasets {
 		List<List<String>> dateList = DateUtil.splitList(dates, 50);
 		ExecutorService transferDataExecutor = Executors.newFixedThreadPool(dateList.size());
 		for (List<String> date : dateList) {
-			TransferDataTask tdt = new TransferDataTask(mongodb, stockCodes, date);
+			TransferDataTask tdt = new TransferDataTask(mongodb, stockCodes, date, isReal);
 			transferDataExecutor.submit(tdt);
 		}
 		transferDataExecutor.shutdown();

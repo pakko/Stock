@@ -11,13 +11,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class MatchResult {
 	private String code;
 	private long date;
-	
-	public MatchResult(String code, long date) {
+	private String strategy;
+	public MatchResult(String code, long date, String strategy) {
 		super();
 		this.code = code;
 		this.date = date;
+		this.strategy = strategy;
 	}
-	
 	public String getCode() {
 		return code;
 	}
@@ -30,11 +30,17 @@ public class MatchResult {
 	public void setDate(long date) {
 		this.date = date;
 	}
+	public String getStrategy() {
+		return strategy;
+	}
+	public void setStrategy(String strategy) {
+		this.strategy = strategy;
+	}
 	@Override
 	public String toString() {
-		return "MatchResult [code=" + code + ", date=" + date + "]";
+		return "MatchResult [code=" + code + ", date=" + date + ", strategy="
+				+ strategy + "]";
 	}
-	
 	
 	
 	

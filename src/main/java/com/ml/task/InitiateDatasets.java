@@ -2,6 +2,7 @@ package com.ml.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,17 +10,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-
-
-
-
-
-
 import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 import com.ml.db.MongoDB;
+import com.ml.strategy.Context;
+import com.ml.strategy.Strategy;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -88,6 +85,38 @@ public class InitiateDatasets {
 	    retrieveDataExecutor.shutdown();
 	    
 	    waitForComplete(retrieveDataExecutor, 60 * 2);
+	}
+	
+	public static void calculate(String beginDate, String endDate, 
+			MongoDB mongodb, List<String> stockCodes, String strategys) {
+		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
+		List<List<String>> dataList = DateUtil.splitList(dates, 50);
+		if(dataList.size() <= 0)
+			return;
+		
+		//strategy model
+		String[] strategyArray = strategys.split(",");
+		
+		for(String strategyStr: strategyArray) {
+			try {
+				Class<?> classType = Class.forName("com.ml.strategy." + strategyStr);
+				Constructor<?> constructor = classType.getDeclaredConstructor(MongoDB.class);
+				Strategy strategy = (Strategy) constructor.newInstance(mongodb);
+				Context context = new Context(strategy);
+		        
+				ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
+				for (List<String> data : dataList) {
+					CalculateTask ct = new CalculateTask(stockCodes, data, context);
+					executor.submit(ct);
+				}
+				executor.shutdown();
+				
+				waitForComplete(executor, 60 * 2);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
 	}
 	
 	public static Map<String, String> getStockCodes() throws IOException {

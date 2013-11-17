@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>Stock Mining</title>
+		<link type="text/css" href="resources/css/jquery-ui.min.css" rel="stylesheet" />
+
+		<!-- Framework CSS -->
+		<link rel="stylesheet" href="resources/css/blueprint/screen.css" type="text/css" media="screen, projection"/>
+		<link rel="stylesheet" href="resources/css/blueprint/print.css" type="text/css" media="print"/>
+		<!--[if lte IE 8]><link rel="stylesheet" href="resources/css/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+		<link rel="stylesheet" href="resources/css/rain.css" type="text/css" media="screen, projection"/>
+		<!--[if lt IE 9]><script type="text/javascript" src="resources/js/html5.js"></script><![endif]-->
+
+		<!-- Custom CSS -->
+		<link type="text/css" href="resources/css/style.css" rel="stylesheet" />
+
+		<script src="resources/js/jquery/jquery-2.0.3.min.js" type="text/javascript"></script>
+		<script src="resources/js/jquery/jquery-ui.min.js" type="text/javascript"></script>
+		<script src="resources/js/jquery/jquery.tmpl.min.js" type="text/javascript"></script>
+		<script src="resources/js/date.js" type="text/javascript"></script>
+		
+		<script src="resources/js/common.js" type="text/javascript"></script>
+		<script src="resources/js/index.js" type="text/javascript"></script>
+	</head>
+
+	<body class="body">
+		<div class="header headerBlue">
+			<nav class="listStyleNo positionR clearfix">
+				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">新闻</a>
+				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">微博</a>
+				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">购物</a>
+			</nav>
+		</div>
+		<div class="headerM headerGrey">
+			<div class="container positionR">
+				<div id="customHeader">
+					<a class="textDecNone displayBlock paddingTopLL fontsizeXxlarge" href="./">Stock Mining</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="container marginTop">
+			<div class="content">
+				<div class="main">
+					<h2>Task Submit</h2>
+					<hr/>
+					<table>
+						<tr>
+							<th class="col_head">Retrieve：</th>
+							<td>
+								<input type="radio" id="retrieveHistory" value="history" name="retrieve" checked="checked" /><label for="retrieveHistory">Retrieve History</label>
+								<input type="radio" id="retrieveReal" value="real" name="retrieve" /><label for="retrieveReal">Retrieve Real</label>
+								<input type="button" value="Retrieve" id="retrieve" /> | 
+								<input type="button" value="Retrieve Share Capital" id="retrieveSC" />
+								<input type="button" value="Retrieve DDX" id="retrieveDDX" />
+								<p id="retrieveProgressbar"><div id="retrieveProgressbar-label" class="progress-label"></div></p>
+							</td>
+						</tr>
+						<tr>
+							<th class="col_head" rowspan="2">Transfer：</th>
+							<td>
+								<input type="radio" id="transferHistory" value="history" name="transfer" checked="checked" /><label for="transferHistory">Transfer History</label>
+								<input type="radio" id="transferReal" value="real" name="transfer" /><label for="transferReal">Transfer Real</label>
+								<input type="button" value="Transfer" id="transfer" />
+								<span id="transferProgressbar"></span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<span id="transferDate">
+									Start Date: <input type="text" id="transferStartDate" />
+									End Date: <input type="text" id="transferEndDate" />
+								</span>
+								<hr/>
+							</td>
+						</tr>
+						<tr>
+							<th class="col_head" rowspan="2">Calculate：</th>
+							<td>
+								<input type="radio" id="calculateHistory" value="history" name="calculate" checked="checked" /><label for="calculateHistory">Calculate History</label>
+								<input type="radio" id="calculateReal" value="real" name="calculate" /><label for="calculateReal">Calculate Real</label>
+								<span id="calc_strategy"></span>
+								<input type="button" value="Calculate" id="calculate" />
+								<span id="calculateProgressbar"></span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<span id="calculateDate">
+									Start Date: <input type="text" id="calculateStartDate" />
+									End Date: <input type="text" id="calculateEndDate" />
+								</span>
+								<hr/>
+							</td>
+						</tr>
+						<tr>
+							<th class="col_head" rowspan="2">One click：</th>
+							<td>
+								<input type="radio" id="oneClickCalculateHistory" value="history" name="oneClickCalculate" checked="checked" /><label for="oneClickCalculateHistory">OneClick Calculate History</label>
+								<input type="radio" id="oneClickCalculateReal" value="real" name="oneClickCalculate" /><label for="oneClickCalculateReal">OneClick Calculate Real</label>
+								<input type="button" value="One Click Calculate" id="oneClickCalculate" />
+								<span id="oneClickCalculateProgressbar"></span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<span id="oneClickCalculateDate">
+									Start Date: <input type="text" id="oneClickCalculateStartDate" />
+									End Date: <input type="text" id="oneClickCalculateEndDate" />
+								</span>
+								<hr/>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<footer class="footer socialFooter clear borderTop">
+					<p class="bottom paddingLeftS">
+						Copyright 2013 Pakko Empire All rights reserved.
+					</p>
+				</footer>
+			</div>
+		</div>
+	</body>
+
+</html>

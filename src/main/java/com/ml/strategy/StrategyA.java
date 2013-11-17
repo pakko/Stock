@@ -109,7 +109,7 @@ public class StrategyA extends AbstractStrategy {
 			}
 			flag = 9;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
-			saveMatchResult(stockCode, theDate);
+			saveMatchResult(stockCode, theDate, this.getClass().getName());
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 		}

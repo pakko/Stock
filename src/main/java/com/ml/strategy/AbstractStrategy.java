@@ -33,8 +33,8 @@ public abstract class AbstractStrategy implements Strategy {
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	
-	protected void saveMatchResult(String stockCode, String theDate) {
-		MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate));
+	protected void saveMatchResult(String stockCode, String theDate, String strategy) {
+		MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate), strategy);
 		mongodb.save(matchResult, Constants.MatchResultCollectionName);
 	}
 	

@@ -162,7 +162,7 @@ public class TransferDataTask implements Runnable {
 			ScenarioResult smr = new ScenarioResult(stockCode, theDateSecs, stockPrice, ltp,
 					ma5, ma10, ma20, ma30, ma60, ma120, ma250,
 					hsl5, hsl10, hsl20, hsl30, hsl60, hsl120, hsl250,
-					up5, up10, up20, up30, up60, up120, up250);
+					up5, up10, up20, up30, up60, up120, up250, isReal);
 			mongodb.save(smr, Constants.ScenarioResultCollectionName);
 			flag = 4;
 		} catch(Exception e) {

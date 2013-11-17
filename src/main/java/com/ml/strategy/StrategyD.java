@@ -155,7 +155,7 @@ public class StrategyD extends AbstractStrategy {
 			
 			flag = 10;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
-			saveMatchResult(stockCode, theDate);
+			saveMatchResult(stockCode, theDate, this.getClass().getName());
 		} catch(Exception e) {
 			logger.error("Error on calculate, " + e.getMessage());
 			e.printStackTrace();

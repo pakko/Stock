@@ -75,7 +75,7 @@ public class Main {
 			ExecutorService executor = Executors.newFixedThreadPool(dataList.size());
 			
 			//strategy model
-			Strategy strategy = new StrategyA(mongodb);
+			Strategy strategy = new StrategyD(mongodb);
 			Context context = new Context(strategy);
 	        
 			for (List<String> data : dataList) {

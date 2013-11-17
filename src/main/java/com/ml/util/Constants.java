@@ -14,6 +14,7 @@ public class Constants {
 	public static final String ShareCapitalCollectionName = "shareCapital";
 	public static final String RealStockCollectionName = "realStock";
 	public static final String DDZStockCollectionName = "ddzStock";
+	public static final String StockCodeCollectionName = "stockCode";
 
 	public static final String ScenarioResultCollectionName = "scenarioResult";
 	public static final String MatchResultCollectionName = "matchResult";

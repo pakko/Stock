@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import com.ml.db.MongoDB;
 import com.ml.model.MatchResult;
 import com.ml.model.ScenarioResult;
+import com.ml.model.Stock;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -37,5 +38,12 @@ public abstract class AbstractStrategy implements Strategy {
 		MatchResult matchResult = new MatchResult(stockCode, DateUtil.getMilliseconds(theDate), strategy);
 		mongodb.save(matchResult, Constants.MatchResultCollectionName);
 	}
+	
+	protected Stock getQueryStock(String stockCode, long date) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("code").is(stockCode));
+        query.addCriteria(Criteria.where("date").is(date));
+        return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
+    }
 	
 }

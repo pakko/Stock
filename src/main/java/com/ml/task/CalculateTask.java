@@ -25,7 +25,8 @@ public class CalculateTask implements Runnable {
 	@Override
 	public void run() {
 		long start = System.currentTimeMillis();
-		logger.info("begin to run calculate: " + dataList.size());
+		logger.info("begin to run calculate: " + context.getStrategy().getClass().getSimpleName()
+				+ ", size: " + dataList.size());
 		try{
 			for (String date : dataList) {
 				Map<Integer, Integer> stats = new HashMap<Integer, Integer>();

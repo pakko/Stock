@@ -37,3 +37,7 @@ body {font-family:arial,sans-serif;font-size:10pt;}
    font-weight: bold;
    text-shadow: 1px 1px 0 #fff;
  }
+ 
+#box {
+	display:none;
+}

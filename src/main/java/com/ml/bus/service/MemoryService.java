@@ -23,29 +23,29 @@ public class MemoryService {
 	@Autowired
 	StockDAO stockDAO;
 	
-	private Map<String, String> ceStockCodes;
+	private Map<String, String> mapCeStockCodes;
+	private List<StockCode> ceStockCodes;
+
 	private String strategys;
 	private List<String> stockCodes;
 	
 	@PostConstruct 
     public void init() throws IOException{ 
-		List<StockCode> ceCodeList = stockDAO.findAllStockCodes();
-		ceStockCodes = new HashMap<String, String>(ceCodeList.size());
-		for(StockCode sc: ceCodeList) {
-			ceStockCodes.put(sc.getCode(), sc.getName());
+		ceStockCodes = stockDAO.findAllStockCodes();
+		mapCeStockCodes = new HashMap<String, String>(ceStockCodes.size());
+		for(StockCode sc: ceStockCodes) {
+			mapCeStockCodes.put(sc.getCode(), sc.getName());
 		}
 		setStrategys("StrategyA,StrategyB,StrategyC,StrategyD");
 		stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
     }
-	
-	public Map<String, String> getCeStockCodes() {
-		return ceStockCodes;
-	}
 
-	public void setCeStockCodes(Map<String, String> ceStockCodes) {
-		this.ceStockCodes = ceStockCodes;
+	public Map<String, String> getMapCeStockCodes() {
+		return mapCeStockCodes;
 	}
-
+	public void setMapCeStockCodes(Map<String, String> mapCeStockCodes) {
+		this.mapCeStockCodes = mapCeStockCodes;
+	}
 	public List<String> getStockCodes() {
 		return stockCodes;
 	}
@@ -58,4 +58,11 @@ public class MemoryService {
 	public void setStrategys(String strategys) {
 		this.strategys = strategys;
 	}
+	public List<StockCode> getCeStockCodes() {
+		return ceStockCodes;
+	}
+	public void setCeStockCodes(List<StockCode> ceStockCodes) {
+		this.ceStockCodes = ceStockCodes;
+	}
+	
 }

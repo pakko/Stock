@@ -71,11 +71,17 @@ public class TaskController {
     		@RequestParam(value = "endDate", required = true) String endDate) {
     	
     	List<String> stockCodes = memoryService.getStockCodes();
-    	logger.info("begin to transfer stock data, type: " + type + " startDate: " + startDate + " endDate: " + endDate);
+    	logger.info("begin to transfer stock data, type: " + type + " ,startDate: " + startDate + " ,endDate: " + endDate);
     	if(type.equals("history")) {
-    		taskService.transferStocks(startDate, endDate, stockCodes, false);
+    		//check whether transfered
+    		transferStockService.clearRealTransfer();
+    		boolean transfered = transferStockService.checkRetrieved(stockCodes, startDate, endDate);
+    		logger.info("check transfered: " + transfered);
+    		if(!transfered)
+    			taskService.transferStocks(startDate, endDate, stockCodes, false);
     	}
     	else if(type.equals("real")) {
+    		transferStockService.clearRealTransfer();
     		taskService.transferStocks(startDate, endDate, stockCodes, true);
     	}
     	logger.info("end of transfering stock data");
@@ -91,8 +97,10 @@ public class TaskController {
     		@RequestParam(value = "endDate", required = true) String endDate,
     		@RequestParam(value = "strategys", required = true) String strategys) {
     	
-    	logger.info("begin to calculate stock data, type: " + type + " startDate: " + startDate + " endDate: " + endDate);
+    	logger.info("begin to calculate stock data, type: " + type + " ,startDate: " + startDate + " ,endDate: " + endDate);
     	List<String> stockCodes = memoryService.getStockCodes();
+    	//clear calculated
+    	matchResultService.clearMatchResult(startDate, endDate);
     	taskService.calculate(startDate, endDate, stockCodes, strategys);
     	logger.info("end of calculating stock data");
     	
@@ -109,27 +117,32 @@ public class TaskController {
     	List<String> stockCodes = memoryService.getStockCodes();
     	String strategys = memoryService.getStrategys();
     	
-    	logger.info("begin to oneclick calculate stock data, type: " + type + " startDate: " + startDate + " endDate: " + endDate);
+    	logger.info("begin to oneclick calculate stock data, type: " + type + " ,startDate: " + startDate + " ,endDate: " + endDate);
     	if(type.equals("history")) {
-    		//check whether retrieved
+    		//1, check whether retrieved
     		boolean retrieved = stockService.checkRetrieved(stockCodes, startDate, endDate);
     		logger.info("check retrieved: " + retrieved);
     		if(!retrieved)
     			taskService.retrieveStockData(stockCodes);
-    		//check whether transfered3
+    		//2, clear real transfered
     		transferStockService.clearRealTransfer();
+    		//3, check whether transfered
     		boolean transfered = transferStockService.checkRetrieved(stockCodes, startDate, endDate);
     		logger.info("check transfered: " + transfered);
     		if(!transfered)
     			taskService.transferStocks(startDate, endDate, stockCodes, false);
     	}
     	else if(type.equals("real")) {
+    		//1, retrieve
     		taskService.retrieveRealStock(stockCodes);
+    		//2, clear real transfered
     		transferStockService.clearRealTransfer();
+    		//3, transfer
     		taskService.transferStocks(startDate, endDate, stockCodes, true);
     	}
-    	//clear calculated
+    	//4, clear calculated
     	matchResultService.clearMatchResult(startDate, endDate);
+    	//5, calculate
     	taskService.calculate(startDate, endDate, stockCodes, strategys);
     	logger.info("end of oneclick calculating stock data");
     	

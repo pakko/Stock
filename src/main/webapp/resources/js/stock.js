@@ -13,7 +13,8 @@ $(function() {
 	
 	//for stock code auto complete
 	var availableStockCodes = new Array();
-	getAjaxRequest("rs/stock/code", function(data){
+	getAjaxRequest("rs/stock/code", false, function(data){
+		console.log(data);
 		for(var i in data) {
 			var temp_obj = {
 					value: data[i].code,

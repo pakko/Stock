@@ -16,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import com.ml.db.MongoDB;
 import com.ml.model.StockCode;
 import com.ml.task.InitiateDatasets;
+import com.ml.task.TaskResemble;
 import com.ml.util.Constants;
 import com.ml.util.DateUtil;
 
@@ -36,7 +37,7 @@ public class Test {
 		List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		System.out.println("Corp code size: " + stockCodes.size());
 		
-		Map<String, String> map = InitiateDatasets.getStockCodes();
+		Map<String, String> map = TaskResemble.getStockCodes();
 		for(String code: stockCodes) {
 			StockCode sc = new StockCode(code, map.get(code.substring(2)));
 			if(map.get(code.substring(2)) == null)

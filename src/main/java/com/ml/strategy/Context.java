@@ -13,5 +13,12 @@ public class Context {
     public int calculate(String stockCode, String theDate){
     	return strategy.calculate(stockCode, theDate);
     }
+	public Strategy getStrategy() {
+		return strategy;
+	}
+	public void setStrategy(Strategy strategy) {
+		this.strategy = strategy;
+	}
+    
     
 }

@@ -1,7 +1,6 @@
 package com.ml.bus.controller;
 
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,36 +15,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ml.bus.service.MemoryService;
-import com.ml.bus.service.StockService;
-import com.ml.model.Stock;
-import com.ml.model.StockCode;
+import com.ml.bus.service.TransferStockService;
+import com.ml.model.ScenarioResult;
 import com.ml.util.Pagination;
 
 
 @Controller
-@RequestMapping(value = "/stock")
-public class StockController {
+@RequestMapping(value = "/transfer")
+public class TransferController {
 
     @Autowired
-    private StockService stockService;
+    private TransferStockService transferStockService;
     
     @Autowired
     private MemoryService memoryService;
-    
-    @RequestMapping(value = "/code", method = RequestMethod.GET)
-    public @ResponseBody List<StockCode> getStockCode() {
-    	return memoryService.getCeStockCodes();
-    }
-    
-    @RequestMapping(value = "/strategy", method = RequestMethod.GET)
-    public @ResponseBody List<String> getStrategys() {
-    	String strategys = memoryService.getStrategys();
-    	List<String> results = new ArrayList<String>();
-    	for(String str: strategys.split(",")) {
-    		results.add(str);
-    	}
-    	return results;
-    }
     
     @RequestMapping(value = "", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public @ResponseBody Map<String, Object> getStock(
@@ -59,20 +42,20 @@ public class StockController {
     	Pagination pager = new Pagination(servletRequest);
     	if(startDate != null && !startDate.equals("")
     			&& endDate != null && !endDate.equals("")) {
-    		pager = stockService.findByPageAndStockCodeAndDate(pager, code, startDate, endDate);
+    		pager = transferStockService.findByPageAndStockCodeAndDate(pager, code, startDate, endDate);
     	}
     	else {
-    		pager = stockService.findByPageAndStockCode(pager, code);
+    		pager = transferStockService.findByPageAndStockCode(pager, code);
     	}
     	
     	@SuppressWarnings("unchecked")
-		List<Stock> stocks = (List<Stock>) pager.getItems();
+		List<ScenarioResult> srs = (List<ScenarioResult>) pager.getItems();
     	
     	Map<String, Object> result = new HashMap<String, Object>();
 		result.put("total", pager.getTotalPage());
 		result.put("page", pager.getCurrentPage());
 		result.put("records", pager.getTotalCount());
-		result.put("rows", stocks);
+		result.put("rows", srs);
 		
 		return result;
     }

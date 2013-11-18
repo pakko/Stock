@@ -28,5 +28,8 @@ public class TransferStockDAO {
 		return baseDB.find(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	
+	public int count(Query query) {
+		return (int) baseDB.count(query, Constants.StockCollectionName);
+	}
 
 }

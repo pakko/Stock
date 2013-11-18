@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>Stock Mining</title>
+		<title>Task Submit: Stock Mining</title>
 		<link type="text/css" href="resources/css/jquery-ui.min.css" rel="stylesheet" />
 
 		<!-- Framework CSS -->
@@ -27,9 +27,10 @@
 	<body class="body">
 		<div class="header headerBlue">
 			<nav class="listStyleNo positionR clearfix">
-				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">新闻</a>
-				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">微博</a>
-				<a href="#" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">购物</a>
+				<a href="index.html" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">dashborad</a>
+				<a href="stock.html" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">stock</a>
+				<a href="transfer.html" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">transfer</a>
+				<a href="result.html" class="headerLink headerLinkBlue left paddingRight paddingLeft displayBlock textDecNone">result</a>
 			</nav>
 		</div>
 		<div class="headerM headerGrey">
@@ -43,8 +44,6 @@
 		<div class="container marginTop">
 			<div class="content">
 				<div class="main">
-					<h2>Task Submit</h2>
-					<hr/>
 					<table>
 						<tr>
 							<th class="col_head">Retrieve：</th>
@@ -63,7 +62,7 @@
 								<input type="radio" id="transferHistory" value="history" name="transfer" checked="checked" /><label for="transferHistory">Transfer History</label>
 								<input type="radio" id="transferReal" value="real" name="transfer" /><label for="transferReal">Transfer Real</label>
 								<input type="button" value="Transfer" id="transfer" />
-								<span id="transferProgressbar"></span>
+								<p id="transferProgressbar"><div id="transferProgressbar-label" class="progress-label"></div></p>
 							</td>
 						</tr>
 						<tr>
@@ -82,7 +81,7 @@
 								<input type="radio" id="calculateReal" value="real" name="calculate" /><label for="calculateReal">Calculate Real</label>
 								<span id="calc_strategy"></span>
 								<input type="button" value="Calculate" id="calculate" />
-								<span id="calculateProgressbar"></span>
+								<p id="calculateProgressbar"><div id="calculateProgressbar-label" class="progress-label"></div></p>
 							</td>
 						</tr>
 						<tr>
@@ -100,7 +99,7 @@
 								<input type="radio" id="oneClickCalculateHistory" value="history" name="oneClickCalculate" checked="checked" /><label for="oneClickCalculateHistory">OneClick Calculate History</label>
 								<input type="radio" id="oneClickCalculateReal" value="real" name="oneClickCalculate" /><label for="oneClickCalculateReal">OneClick Calculate Real</label>
 								<input type="button" value="One Click Calculate" id="oneClickCalculate" />
-								<span id="oneClickCalculateProgressbar"></span>
+								<p id="oneClickCalculateProgressbar"><div id="oneClickCalculateProgressbar-label" class="progress-label"></div></p>
 							</td>
 						</tr>
 						<tr>
@@ -116,7 +115,7 @@
 				</div>
 				<footer class="footer socialFooter clear borderTop">
 					<p class="bottom paddingLeftS">
-						Copyright 2013 Pakko Empire All rights reserved.
+						Copyright 2013 Pakko All rights reserved.
 					</p>
 				</footer>
 			</div>

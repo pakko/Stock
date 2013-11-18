@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import com.ml.db.IBaseDB;
+import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
 import com.ml.model.Stock;
 import com.ml.util.Constants;
@@ -43,7 +44,10 @@ public class MatchResultDAO {
 
 	public List<MatchResult> find(Query query) {
 		return baseDB.find(query, MatchResult.class, Constants.MatchResultCollectionName);
-
+	}
+	
+	public List<DdzStock> findDDZ(Query query) {
+		return baseDB.find(query, DdzStock.class, Constants.DDZStockCollectionName);
 	}
 
 }

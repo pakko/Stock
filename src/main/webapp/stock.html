@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>Result: Stock Mining</title>
+		<title>Stock Mining</title>
 		<link type="text/css" href="resources/css/jquery-ui.min.css" rel="stylesheet" />
 		<link type="text/css" href="resources/css/ui.jqgrid.css" rel="stylesheet" />
 
@@ -21,12 +21,11 @@
 		<script src="resources/js/jquery/jquery.tmpl.min.js" type="text/javascript"></script>
 		<script src="resources/js/jquery/jquery.jqGrid.src.js" type="text/javascript"></script>
 		<script src="resources/js/jquery/i18n/grid.locale-cn.js" type="text/javascript"></script>
-		<script src="resources/js/jquery/jquery.blockUI.js" type="text/javascript"></script>		
 		
 		<script src="resources/js/date.js" type="text/javascript"></script>
 		
 		<script src="resources/js/common.js" type="text/javascript"></script>
-		<script src="resources/js/result.js" type="text/javascript"></script>
+		<script src="resources/js/stock.js" type="text/javascript"></script>
 	</head>
 
 	<body class="body">
@@ -55,11 +54,6 @@
 						Start Date: <input type="text" id="startDatepicker" />
 						End Date: <input type="text" id="endDatepicker" />
 						<input type="submit" value="Search" id="searchStock" />
-						<span style="float:right">Group By: <select id="chngroup">
-							<option value="date">date</option>
-							<option value="code">code</option>
-							<option value="strategy">strategy</option>	
-						</select></span>
 					</div>
 					<table id="stockContent"></table>
 					<div id="pageCount"></div> 
@@ -78,13 +72,6 @@
 					<p>${code} - ${formatDate(date)}</p>
 				</div>
 			</script>
-			
-			<div id="box">
-				<h3>分时</h3>
-				<img id="realImg" src="" />
-				<h3>日K</h3>
-				<img id="dailyKImg" src="" />
-			</div>
 	</body>
 
 </html>

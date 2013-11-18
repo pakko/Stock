@@ -29,7 +29,7 @@ $(function() {
 	$("#oneClickCalculateEndDate").val(date.toString("yyyy-MM-dd"));
 	
 	//get strategys
-	getAjaxRequest("rs/stock/strategy", function(data){
+	getAjaxRequest("rs/stock/strategy", false, function(data){
 		for(var i in data) {
 			$("#calc_strategy").append("<input type='checkbox' id='"+data[i]+"' value='"+data[i]+"' checked='checked' /><label for='"+data[i]+"'>"+data[i]+"</label>");
 		}
@@ -38,33 +38,21 @@ $(function() {
 	$("#retrieve").button().click(function(event) {
     	event.preventDefault();
     	var retrieveRadio = $("input[name='retrieve']:checked").val();
-    	getAjaxRequest("rs/task/retrieve?type=" + retrieveRadio, function(data){
-    		alert(data);
-    	});
+    	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=" + retrieveRadio, 2);
     });
 	$("#retrieveSC").button().click(function(event) {
     	event.preventDefault();
-    	prograssbarTemplate("#retrieveProgressbar");
-    	progress("#retrieveProgressbar", 1 * 1000);
-    	getAjaxRequest("rs/task/retrieve?type=sc", function(data){
-    		progress("#retrieveProgressbar", 1 * 1000);
-    		setTimeout(function(){
-    			destroyProgressBar("#retrieveProgressbar");
-    		}, 2000);
-    	});
+    	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=sc", 1);
     });
 	$("#retrieveDDX").button().click(function(event) {
     	event.preventDefault();
-    	getAjaxRequest("rs/task/retrieve?type=ddx", function(data){
-    		alert(data);
-    	});
+    	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=ddx", 1);
     });
 	
 	$("#transfer").button().click(function(event) {
     	event.preventDefault();
     	var transferRadio = $("input[name='transfer']:checked").val();
-    	var startDate;
-    	var endDate;
+    	var startDate, endDate;
     	if(transferRadio == "history") {
     		startDate = $("#transferStartDate").val();
     		endDate = $("#transferEndDate").val();
@@ -75,16 +63,15 @@ $(function() {
     		endDate = d.toString("yyyy-MM-dd");
     	}
     	var url = "rs/task/transfer?type=" + transferRadio + "&startDate=" + startDate + "&endDate=" + endDate;
-    	getAjaxRequest(url, function(data){
-    		alert(data);
-    	});
+    	var days = getDaysBetweenDates(startDate, endDate);
+    	var interval = days - Math.round((days / 5) * 2);
+    	buttonProcess("#transferProgressbar", url, 3 * interval);
     });
 	
 	$("#calculate").button().click(function(event) {
     	event.preventDefault();
     	var calculateRadio = $("input[name='calculate']:checked").val();
-    	var startDate;
-    	var endDate;
+    	var startDate, endDate;
     	if(calculateRadio == "history") {
     		startDate = $("#calculateStartDate").val();
     		endDate = $("#calculateEndDate").val();
@@ -100,16 +87,15 @@ $(function() {
 		});
     	var url = "rs/task/calculate?type=" + calculateRadio + "&startDate=" + startDate + "&endDate=" + endDate 
     				+ "&strategys=" + strategys.substring(0, strategys.length - 1);
-    	getAjaxRequest(url, function(data){
-    		alert(data);
-    	});
+    	var days = getDaysBetweenDates(startDate, endDate);
+    	var interval = days - Math.round((days / 5) * 2);
+    	buttonProcess("#calculateProgressbar", url, 1 * interval);
     });
 	
 	$("#oneClickCalculate").button().click(function(event) {
     	event.preventDefault();
     	var oneClickCalculateRadio = $("input[name='oneClickCalculate']:checked").val();
-    	var startDate;
-    	var endDate;
+    	var startDate, endDate;
     	if(oneClickCalculateRadio == "history") {
     		startDate = $("#oneClickCalculateStartDate").val();
     		endDate = $("#oneClickCalculateEndDate").val();
@@ -120,9 +106,9 @@ $(function() {
     		endDate = d.toString("yyyy-MM-dd");
     	}
     	var url = "rs/task/oneClickCalculate?type=" + oneClickCalculateRadio + "&startDate=" + startDate + "&endDate=" + endDate;
-    	getAjaxRequest(url, function(data){
-    		alert(data);
-    	});
+    	var days = getDaysBetweenDates(startDate, endDate);
+    	var interval = days - Math.round((days / 5) * 2);
+    	buttonProcess("#oneClickCalculateProgressbar", url, 5 * interval);
     });
 });
 
@@ -135,6 +121,18 @@ function radioDisplay(item, value, displayId) {
 		else {
 			$(displayId).show();
 		}
+	});
+}
+
+function buttonProcess(itemId, url, speed) {
+	prograssbarTemplate(itemId);
+	progress(itemId, speed * 1000);
+	
+	getAjaxRequest(url, true, function(data){
+		$(itemId).progressbar("value", 100);
+		setTimeout(function(){
+			destroyProgressBar(itemId);
+		}, 2000);
 	});
 }
 
@@ -157,6 +155,7 @@ function destroyProgressBar(itemId){
 	var progressbar = $( itemId );
 	var labelId = itemId.substring(1, itemId.length) + '-label';
 	var progressLabel = $( "#" + labelId );
+	clearTimeout($("div").data("tid"));
 	progressbar.progressbar( "destroy" );
 	progressLabel.text("");
 }
@@ -166,8 +165,9 @@ function progress(itemId, time) {
 	var val = progressbar.progressbar("value") || 0;
 	progressbar.progressbar("value", val + 1);
 	if (val < 98) {
-		setTimeout(function(){
+		var tid = setTimeout(function(){
 			progress(itemId, time);
 		}, time);
+		$("div").data("tid", tid);
 	}
 }

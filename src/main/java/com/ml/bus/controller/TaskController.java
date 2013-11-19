@@ -101,7 +101,12 @@ public class TaskController {
     	List<String> stockCodes = memoryService.getStockCodes();
     	//clear calculated
     	matchResultService.clearMatchResult(startDate, endDate);
-    	taskService.calculate(startDate, endDate, stockCodes, strategys);
+    	
+    	boolean isReal = false;
+    	if(type.equals("real")) {
+    		isReal = true;
+    	}
+    	taskService.calculate(startDate, endDate, stockCodes, strategys, isReal);
     	logger.info("end of calculating stock data");
     	
     	return "{\"success\": \"ok\"}";
@@ -131,6 +136,10 @@ public class TaskController {
     		logger.info("check transfered: " + transfered);
     		if(!transfered)
     			taskService.transferStocks(startDate, endDate, stockCodes, false);
+    		//4, clear calculated
+        	matchResultService.clearMatchResult(startDate, endDate);
+        	//5, calculate
+        	taskService.calculate(startDate, endDate, stockCodes, strategys, false);
     	}
     	else if(type.equals("real")) {
     		//1, retrieve
@@ -139,11 +148,12 @@ public class TaskController {
     		transferStockService.clearRealTransfer();
     		//3, transfer
     		taskService.transferStocks(startDate, endDate, stockCodes, true);
+    		//4, clear calculated
+        	matchResultService.clearMatchResult(startDate, endDate);
+        	//5, calculate
+        	taskService.calculate(startDate, endDate, stockCodes, strategys, true);
     	}
-    	//4, clear calculated
-    	matchResultService.clearMatchResult(startDate, endDate);
-    	//5, calculate
-    	taskService.calculate(startDate, endDate, stockCodes, strategys);
+    	
     	logger.info("end of oneclick calculating stock data");
     	
     	return "{\"success\": \"ok\"}";

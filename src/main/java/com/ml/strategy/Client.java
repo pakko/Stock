@@ -23,7 +23,7 @@ public class Client {
 		String theDate = "2013-10-15";
 
         //选择并创建需要使用的策略对象
-        Strategy strategy = new StrategyD(mongodb);
+        Strategy strategy = new StrategyD(mongodb, false);
         //创建环境
         Context context = new Context(strategy);
         //计算

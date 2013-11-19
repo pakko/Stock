@@ -88,7 +88,7 @@ public class TaskResemble {
 	}
 	
 	public static void calculate(String beginDate, String endDate, 
-			MongoDB mongodb, List<String> stockCodes, String strategys) {
+			MongoDB mongodb, List<String> stockCodes, String strategys, boolean isReal) {
 		List<String> dates = DateUtil.getWorkingDays(beginDate, endDate);
 		List<List<String>> dataList = DateUtil.splitList(dates, 50);
 		if(dataList.size() <= 0)
@@ -100,8 +100,8 @@ public class TaskResemble {
 		for(String strategyStr: strategyArray) {
 			try {
 				Class<?> classType = Class.forName("com.ml.strategy." + strategyStr);
-				Constructor<?> constructor = classType.getDeclaredConstructor(MongoDB.class);
-				Strategy strategy = (Strategy) constructor.newInstance(mongodb);
+				Constructor<?> constructor = classType.getDeclaredConstructor(MongoDB.class, Boolean.class);
+				Strategy strategy = (Strategy) constructor.newInstance(mongodb, isReal);
 				Context context = new Context(strategy);
 		        
 				ExecutorService executor = Executors.newFixedThreadPool(dataList.size());

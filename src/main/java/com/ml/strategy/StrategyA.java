@@ -24,8 +24,8 @@ public class StrategyA extends AbstractStrategy {
 	 * 
 	 */
 	
-	public StrategyA(MongoDB mongodb) {
-		super(mongodb);
+	public StrategyA(MongoDB mongodb, Boolean isReal) {
+		super(mongodb, isReal);
 	}
 	
     public int calculate(String stockCode, String theDate) {
@@ -102,12 +102,16 @@ public class StrategyA extends AbstractStrategy {
 			DateTime beforeDate_2 = DateUtil.getIntervalWorkingDay(beforeDateSecs_1, 1, false);
 			long beforeDateSecs_2 = DateUtil.getMilliseconds(beforeDate_2);
 			ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
-
+			
+			if(theDateSR_1 == null || theDateSR_2 == null) 
+				return flag;
+			
+			flag = 9;
 			if (!(theDateSR.getMa5() > theDateSR_1.getMa5() &&
 					theDateSR_1.getMa5() > theDateSR_2.getMa5())) {
 				return flag;
 			}
-			flag = 9;
+			flag = 10;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ]");
 			saveMatchResult(stockCode, theDate, this.getClass().getSimpleName());
 		} catch(Exception e) {

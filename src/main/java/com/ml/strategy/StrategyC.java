@@ -4,6 +4,7 @@ import hirondelle.date4j.DateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.ml.db.MongoDB;
 import com.ml.model.ScenarioResult;
 import com.ml.util.DateUtil;
@@ -26,8 +27,8 @@ public class StrategyC extends AbstractStrategy {
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(StrategyC.class);
 
-	public StrategyC(MongoDB mongodb) {
-		super(mongodb);
+	public StrategyC(MongoDB mongodb, Boolean isReal) {
+		super(mongodb, isReal);
 	}
 	
 	public int calculate(String stockCode, String theDate) {

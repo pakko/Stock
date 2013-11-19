@@ -14,9 +14,11 @@ import com.ml.util.DateUtil;
 
 public abstract class AbstractStrategy implements Strategy {
 	private MongoDB mongodb;
+	protected boolean isReal;
 	
-	public AbstractStrategy(MongoDB mongodb) {
+	public AbstractStrategy(MongoDB mongodb, Boolean isReal) {
 		this.mongodb = mongodb;
+		this.isReal = isReal;
 	}
 	
 	protected ScenarioResult getQuerySR(String stockCode, long date) {
@@ -45,5 +47,4 @@ public abstract class AbstractStrategy implements Strategy {
         query.addCriteria(Criteria.where("date").is(date));
         return mongodb.findOne(query, Stock.class, Constants.StockCollectionName);
     }
-	
 }

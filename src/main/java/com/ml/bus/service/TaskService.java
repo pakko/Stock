@@ -38,7 +38,7 @@ public class TaskService {
 		TaskResemble.transferStocks(beginDate, endDate, (MongoDB) baseDB, stockCodes, isReal);
 	}
 	
-	public void calculate(String beginDate, String endDate, List<String> stockCodes, String strategys) {
-		TaskResemble.calculate(beginDate, endDate, (MongoDB) baseDB, stockCodes, strategys);
+	public void calculate(String beginDate, String endDate, List<String> stockCodes, String strategys, boolean isReal) {
+		TaskResemble.calculate(beginDate, endDate, (MongoDB) baseDB, stockCodes, strategys, isReal);
 	}
 }

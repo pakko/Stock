@@ -3,6 +3,7 @@
   <groupId>Stock</groupId>
   <artifactId>Stock</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <packaging>war</packaging>
   
   <properties>
         <spring-version>3.1.0.RELEASE</spring-version>
@@ -117,7 +118,7 @@
 			 <artifactId>date4j</artifactId>
 			 <version>1.0</version>
 			 <scope>system</scope>
-			 <systemPath>${project.basedir}/lib/date4j.jar</systemPath>
+			 <systemPath>${project.basedir}/src/main/webapp/WEB-INF/lib/date4j.jar</systemPath>
          </dependency>
          <dependency>
             <groupId>org.apache.httpcomponents</groupId>

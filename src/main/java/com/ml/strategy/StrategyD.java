@@ -26,8 +26,8 @@ public class StrategyD extends AbstractStrategy {
      */
 	private static final Logger logger = LoggerFactory.getLogger(StrategyD.class);
 
-	public StrategyD(MongoDB mongodb) {
-		super(mongodb);
+	public StrategyD(MongoDB mongodb, Boolean isReal) {
+		super(mongodb, isReal);
 	}
 	
 	public int calculate(String stockCode, String theDate) {
@@ -55,9 +55,8 @@ public class StrategyD extends AbstractStrategy {
             ScenarioResult theDateSR_1 = getQuerySR(stockCode, beforeDateSecs_1);
             ScenarioResult theDateSR_2 = getQuerySR(stockCode, beforeDateSecs_2);
            
-            Stock stock = getQueryStock(stockCode, theDateSecs);
-           
-            if(theDateSR == null || theDateSR_10 == null || theDateSR_20 == null)
+            if(theDateSR == null || theDateSR_10 == null || theDateSR_20 == null
+            		|| theDateSR_1 == null || theDateSR_2 == null)
                 return flag;
             //System.out.println(theDateSR + "_" + theDateSR_10 + "_" + theDateSR_10);
            
@@ -111,15 +110,18 @@ public class StrategyD extends AbstractStrategy {
             if ((theDateSR.getMa5() - theDateSR.getMa10()) / nowPrice > 0.02) {
                 return flag;
             }*/
-           
-            flag = 5;
-            if (stock.getTurnOverRate() < theDateSR.getHsl10() && stock.getTurnOverRate() < theDateSR.getHsl5()) {
-                return flag;
-            }
-           
-            if (((stock.getMax() - stock.getClose()) / stock.getClose()) > 0.05) {
-                return flag;
-            }
+
+            if(!super.isReal) {
+            	flag = 5;
+            	Stock stock = getQueryStock(stockCode, theDateSecs);
+                if (stock.getTurnOverRate() < theDateSR.getHsl10() && stock.getTurnOverRate() < theDateSR.getHsl5()) {
+                    return flag;
+                }
+               
+                if (((stock.getMax() - stock.getClose()) / stock.getClose()) > 0.05) {
+                    return flag;
+                }
+			}
            
             flag = 6;
             double nowPrice = theDateSR.getNowPrice();

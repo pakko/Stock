@@ -50,7 +50,7 @@ public class RealCalculateJob extends QuartzJobBean {
 	    	//4, clear calculated
 	    	matchResultService.clearMatchResult(date, date);
 	    	//5, calculate
-	    	taskService.calculate(date, date, stockCodes, strategys);
+	    	taskService.calculate(date, date, stockCodes, strategys, true);
 	    	logger.info("end of oneclick calculating stock data");
 		} catch(Exception e) {
 			logger.error(e.getMessage());

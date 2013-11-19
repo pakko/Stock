@@ -60,7 +60,7 @@ public class Main {
         }
         else if(cmd == 4) {
         	String strategys = "StrategyA,StrategyB,StrategyC,StrategyD";
-        	TaskResemble.calculate(beginDate, endDate, mongodb, stockCodes, strategys);
+        	TaskResemble.calculate(beginDate, endDate, mongodb, stockCodes, strategys, false);
         } else if(cmd == 5) {
         	TaskResemble.retrieveRealStock(mongodb, stockCodes);
         } else if(cmd == 6) {

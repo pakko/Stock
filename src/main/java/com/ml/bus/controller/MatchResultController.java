@@ -41,21 +41,17 @@ public class MatchResultController {
     	if(startDate != null && !startDate.equals("")
     			&& endDate != null && !endDate.equals("")) {
     		if(code != null && !code.equals("")) {
-    			System.out.println("1");
     			mrs = matchResultService.findByCodeAndDate(code, startDate, endDate);
         	}
     		else {
-    			System.out.println("2");
     			mrs = matchResultService.findByDate(startDate, endDate);
     		}
     	}
     	else {
     		if(code != null && !code.equals("")) {
-    			System.out.println("3");
     			mrs = matchResultService.findByCode(code);
         	}
     		else {
-    			System.out.println("4");
     			mrs = matchResultService.findAll();
     		}
     	}

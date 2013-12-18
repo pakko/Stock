@@ -4,8 +4,10 @@ import hirondelle.date4j.DateTime;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,6 +20,7 @@ import com.ml.bus.service.MatchResultService;
 import com.ml.bus.service.MemoryService;
 import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
+import com.ml.model.ShareHolder;
 import com.ml.util.DateUtil;
 
 
@@ -86,4 +89,43 @@ public class MatchResultController {
 		}
 		return sum;
 	}
+    
+    @RequestMapping(value = "/sh", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public @ResponseBody List<Map<Object, Object>> getSH() {
+    	
+		Map<String, TreeSet<ShareHolder>> shareHolders = memoryService.getShareHolders();
+		
+		Map<String, Integer> stats = new HashMap<String, Integer>();
+		for(String key: shareHolders.keySet()) {
+			TreeSet<ShareHolder> ksh = shareHolders.get(key);
+			if(ksh.size() <= 0)
+				break;
+			
+			// 得到股东人数持续减少的次数
+			Iterator<ShareHolder> iter = ksh.iterator();
+			int index = 0;
+			double minSH = iter.next().getTotalHolders();
+			while(iter.hasNext()) {
+				ShareHolder sh = iter.next();
+				if(minSH <= sh.getTotalHolders()) {
+					index++;
+					minSH = sh.getTotalHolders();
+				}
+				else
+					break;
+			}
+			stats.put(key, index);
+		}
+		Map<String, String> stockCodes = memoryService.getMapCeStockCodes();
+		List<Map<Object, Object>> rows = new ArrayList<Map<Object, Object>>();
+		for(String key: stats.keySet()){
+			Map<Object, Object> row = new HashMap<Object, Object>();
+			row.put("code", key);
+			row.put("name", stockCodes.get(key));
+			row.put("days", stats.get(key));
+        	rows.add(row);
+		}
+		
+		return rows;
+    }
 }

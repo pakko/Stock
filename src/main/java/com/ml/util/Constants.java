@@ -19,7 +19,9 @@ public class Constants {
 	public static final String ScenarioResultCollectionName = "scenarioResult";
 	public static final String MatchResultCollectionName = "matchResult";
 	public static final String StatsResultCollectionName = "statsResult";
-
+	public static final String ShareHolderCollectionName = "shareHolder";
+	
 	public static final int BaseDays = 250;
+	
 
 }

@@ -55,6 +55,9 @@ public class TaskController {
     	else if(type.equals("sc")) {
     		taskService.retrieveShareCapital(stockCodes);
     	}
+    	else if(type.equals("sh")) {
+    		taskService.retrieveShareHolder(stockCodes);
+    	}
     	else if(type.equals("ddx")) {
     		taskService.retrieveDDZStock(stockCodes);
     	}

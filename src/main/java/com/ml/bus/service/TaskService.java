@@ -33,7 +33,11 @@ public class TaskService {
 	public void retrieveShareCapital(List<String> stockCodes) {
 		TaskResemble.retrieveShareCapital((MongoDB) baseDB, stockCodes);
 	}
-
+	
+	public void retrieveShareHolder(List<String> stockCodes) {
+		TaskResemble.retrieveShareHolder((MongoDB) baseDB, stockCodes);
+	}
+	
 	public void transferStocks(String beginDate, String endDate, List<String> stockCodes, boolean isReal) {
 		TaskResemble.transferStocks(beginDate, endDate, (MongoDB) baseDB, stockCodes, isReal);
 	}

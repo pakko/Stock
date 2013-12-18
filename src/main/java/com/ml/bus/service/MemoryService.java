@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 
@@ -12,7 +13,9 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ml.bus.dao.MatchResultDAO;
 import com.ml.bus.dao.StockDAO;
+import com.ml.model.ShareHolder;
 import com.ml.model.StockCode;
 import com.ml.util.Constants;
 
@@ -23,11 +26,16 @@ public class MemoryService {
 	@Autowired
 	StockDAO stockDAO;
 	
+	@Autowired
+	MatchResultDAO matchResultDAO;
+	
 	private Map<String, String> mapCeStockCodes;
 	private List<StockCode> ceStockCodes;
 
 	private String strategys;
 	private List<String> stockCodes;
+	
+	private Map<String, TreeSet<ShareHolder>> shareHolders;
 	
 	@PostConstruct 
     public void init() throws IOException{ 
@@ -38,8 +46,25 @@ public class MemoryService {
 		}
 		setStrategys("StrategyA,StrategyB,StrategyC,StrategyD");
 		stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
+		
+		List<ShareHolder> shs = matchResultDAO.findAllSH();
+		shareHolders = new HashMap<String, TreeSet<ShareHolder>>(shs.size());
+		for(ShareHolder sh: shs) {
+			TreeSet<ShareHolder> tsh = shareHolders.get(sh.getCode());
+			if(tsh == null) {
+				tsh = new TreeSet<ShareHolder>();
+			}
+			tsh.add(sh);
+			shareHolders.put(sh.getCode(), tsh);
+		}
     }
-
+	
+	public Map<String, TreeSet<ShareHolder>> getShareHolders() {
+		return shareHolders;
+	}
+	public void setShareHolders(Map<String, TreeSet<ShareHolder>> shareHolders) {
+		this.shareHolders = shareHolders;
+	}
 	public Map<String, String> getMapCeStockCodes() {
 		return mapCeStockCodes;
 	}

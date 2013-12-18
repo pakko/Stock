@@ -44,6 +44,10 @@ $(function() {
     	event.preventDefault();
     	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=sc", 1);
     });
+	$("#retrieveSH").button().click(function(event) {
+    	event.preventDefault();
+    	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=sh", 1);
+    });
 	$("#retrieveDDX").button().click(function(event) {
     	event.preventDefault();
     	buttonProcess("#retrieveProgressbar", "rs/task/retrieve?type=ddx", 1);

@@ -34,9 +34,12 @@ public class ShareHolderParser implements Parser<ShareHolder> {
             	Elements cols = row.children();
             	ListIterator<Element> colIter = cols.listIterator();
             	while(colIter.hasNext()) {
-            		DateTime dateTime = new DateTime(colIter.next().attr("name"));
+            		Element e = colIter.next();
+            		DateTime dateTime = new DateTime(e.attr("name"));
                 	long date = DateUtil.getMilliseconds(dateTime);
-            		double totalHolder = NumberUtil.formatNumber(colIter.next().attr("value"));
+                	if(e.attr("value").equals(""))
+                		continue;
+            		double totalHolder = NumberUtil.formatNumber(e.attr("value"));
             		ShareHolder sh = new ShareHolder(stockCode, date, totalHolder, 0);
             		list.add(sh);
             	}

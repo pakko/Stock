@@ -1,5 +1,6 @@
 package com.ml.crawler;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -19,6 +20,8 @@ public class SimpleHttpCrawler implements Crawler {
 			httpConn.setRequestMethod("GET");
 			in = httpConn.getInputStream();
 			return handleResponse(site.getCharset(), in);
+		
+		} catch (FileNotFoundException e) {
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -26,6 +29,7 @@ public class SimpleHttpCrawler implements Crawler {
 			try {
 				in.close();
 			} catch (IOException e) {
+			} catch (NullPointerException e) {
 			}
 			httpConn.disconnect();
 		}

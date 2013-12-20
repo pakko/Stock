@@ -123,6 +123,7 @@ public class MatchResultController {
 			row.put("code", key);
 			row.put("name", stockCodes.get(key));
 			row.put("days", stats.get(key));
+			row.put("sh", shareHolders.get(key).toString());
         	rows.add(row);
 		}
 		

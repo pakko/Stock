@@ -49,7 +49,7 @@ public class RetrieveSH2DataTask implements Runnable {
 	public void run() {
 		try{
 			long start = System.currentTimeMillis();
-			logger.info("start retrieve share holder data, size: " + stockCodes.size());
+			logger.info("start retrieve share holder2 data, size: " + stockCodes.size());
 			for (String stockCode : stockCodes) {
 				this.process(stockCode);
 			}

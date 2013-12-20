@@ -59,6 +59,18 @@ public class TaskResemble {
 	    waitForComplete(retrieveDataExecutor, 60 * 2);
 	}
 	
+	public static void retrieveShareHolder2(MongoDB mongodb, List<String> stockCodes) {
+		List<List<String>> stockCodeList = DateUtil.splitList(stockCodes, 200);
+		ExecutorService retrieveDataExecutor = Executors.newFixedThreadPool(stockCodeList.size());
+	    for (List<String> subStockCodes: stockCodeList) {
+	    	RetrieveSH2DataTask rshdt = new RetrieveSH2DataTask(mongodb, subStockCodes);
+			retrieveDataExecutor.submit(rshdt);
+		}
+	    retrieveDataExecutor.shutdown();
+	    
+	    waitForComplete(retrieveDataExecutor, 60 * 2);
+	}
+	
 	public static void transferStocks(String beginDate, String endDate,
 			MongoDB mongodb, List<String> stockCodes, boolean isReal) {
 		// get data for transferDataTask

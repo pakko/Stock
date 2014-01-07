@@ -63,7 +63,7 @@ public class RetrieveSH2DataTask implements Runnable {
 	
 	private void process(String stockCode) {
 		String retrieveUrl = GBJG_Prefix1 + stockCode.toUpperCase().substring(0,2) + GBJG_Prefix2 + stockCode.toUpperCase() + GBJG_Post;
-		System.out.println(retrieveUrl);
+		//System.out.println(retrieveUrl);
 		Site site = Site.getInstance().setCharset(DefaultCharset)
 				.setUrl(retrieveUrl);
 		

@@ -17,9 +17,9 @@ $(function() {
 	
 	//grid
 	var result_data;
-	/*postAjaxRequest("rs/result", function(data){
+	postAjaxRequest("rs/result", function(data){
 		result_data = data;
-	});*/
+	});
 	$("#stockContent").jqGrid({
 		data: result_data,
 		datatype: "local",

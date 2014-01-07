@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 @CompoundIndexes({
-    @CompoundIndex(name = "shareHolder", def = "{'code': -1, 'date': -1}", unique = true)
+    @CompoundIndex(name = "shareHolder", def = "{'code': -1, 'date': -1}", unique = true, dropDups = true)
 }) 
 public class ShareHolder implements Comparable<ShareHolder> {
 	private String code;

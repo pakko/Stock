@@ -20,7 +20,16 @@ public class TransferStockService {
 	@Autowired
 	TransferStockDAO transferStockDAO;
 
-
+	public ScenarioResult findByStockCodeAndDate(String code, long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(code));
+		query.addCriteria(Criteria.where("date").is(date));
+		List<ScenarioResult> srs = transferStockDAO.find(query);
+		if(srs.size() > 0)
+			return srs.get(0);
+		return null;
+	}
+	
 	public List<ScenarioResult> findAll() {
 		return transferStockDAO.findAll();
 	}

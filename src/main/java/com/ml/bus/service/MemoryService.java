@@ -3,6 +3,7 @@ package com.ml.bus.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -36,6 +37,7 @@ public class MemoryService {
 	private List<String> stockCodes;
 	
 	private Map<String, TreeSet<ShareHolder>> shareHolders;
+	private Map<String, Integer> shStats;
 	
 	@PostConstruct 
     public void init() throws IOException{ 
@@ -48,6 +50,8 @@ public class MemoryService {
 		stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		
 		List<ShareHolder> shs = matchResultDAO.findAllSH();
+		
+		//share holder
 		shareHolders = new HashMap<String, TreeSet<ShareHolder>>(shs.size());
 		for(ShareHolder sh: shs) {
 			TreeSet<ShareHolder> tsh = shareHolders.get(sh.getCode());
@@ -57,8 +61,38 @@ public class MemoryService {
 			tsh.add(sh);
 			shareHolders.put(sh.getCode(), tsh);
 		}
+		
+		//share holder stats
+		shStats = new HashMap<String, Integer>();
+		for(String key: shareHolders.keySet()) {
+			TreeSet<ShareHolder> ksh = shareHolders.get(key);
+			if(ksh.size() <= 0)
+				break;
+			
+			// 得到股东人数持续减少的次数
+			Iterator<ShareHolder> iter = ksh.iterator();
+			int index = 0;
+			double minSH = iter.next().getTotalHolders();
+			while(iter.hasNext()) {
+				ShareHolder sh = iter.next();
+				if(minSH <= sh.getTotalHolders()) {
+					index++;
+					minSH = sh.getTotalHolders();
+				}
+				else
+					break;
+			}
+			shStats.put(key, index);
+		}
     }
 	
+	
+	public Map<String, Integer> getShStats() {
+		return shStats;
+	}
+	public void setShStats(Map<String, Integer> shStats) {
+		this.shStats = shStats;
+	}
 	public Map<String, TreeSet<ShareHolder>> getShareHolders() {
 		return shareHolders;
 	}

@@ -17,21 +17,25 @@ $(function() {
 	
 	//grid
 	var result_data;
-	postAjaxRequest("rs/result", function(data){
+	/*postAjaxRequest("rs/result", function(data){
 		result_data = data;
-	});
+	});*/
 	$("#stockContent").jqGrid({
 		data: result_data,
 		datatype: "local",
 		mtype: 'POST',
 		contentType: 'application/json',
-	   	colNames:['code','name','date','strategy', 'ddx'],
+	   	colNames:['code','name','date','strategy', 'ddx', 'd5', 'd10', 'dnow', 'sh'],
 	   	colModel:[
-	   		{name:'code',index:'code', width:200, align: 'center'},
-	   		{name:'name',index:'name', width:200, align: 'center'},
-	   		{name:'date',index:'date', width:200, align: 'center', formatter: 'date', formatoptions: {srcformat:'u',newformat:'Y-m-d'}},
-	   		{name:'strategy',index:'strategy', width:200, align: 'center'},
-	   		{name:'ddx',index:'ddx', width:175, align: 'center'}
+	   		{name:'code',index:'code', width:150, align: 'center'},
+	   		{name:'name',index:'name', width:150, align: 'center'},
+	   		{name:'date',index:'date', width:150, align: 'center', formatter: 'date', formatoptions: {srcformat:'u',newformat:'Y-m-d'}},
+	   		{name:'strategy',index:'strategy', width:150, align: 'center'},
+	   		{name:'ddx',index:'ddx', width:100, align: 'center'},
+	   		{name:'d5',index:'d5', width:100, align: 'center'},
+	   		{name:'d10',index:'d10', width:100, align: 'center'},
+	   		{name:'dnow',index:'dnow', width:100, align: 'center'},
+	   		{name:'sh',index:'sh', width:100, align: 'center'}
 	   	],
 	   	rowNum:20,
 	   	rowList:[10,20,30],
@@ -77,15 +81,10 @@ $(function() {
         	var rowData = data.rows;
         	for(var i=0; i<rowData.length;i++){
         		var v = rowData[i];
-        		if(v.ddx < 0){
-        			$("#stockContent").jqGrid('setCell', i+1, 'ddx', Math.round(v.ddx*100)/100, {'background':'url(\'resources/css/images/bg-rowGreen.gif\') repeat-x'});
-        		}
-        		else if(v.ddx > 0) {
-        			$("#stockContent").jqGrid('setCell', i+1, 'ddx', Math.round(v.ddx*100)/100, {'background':'url(\'resources/css/images/bg-rowRed.gif\') repeat-x'});
-        		}
-        		else {
-        			$("#stockContent").jqGrid('setCell', i+1, 'ddx', Math.round(v.ddx*100)/100, "");
-        		}
+        		colorShow(i, v.ddx, 'ddx', 100);
+        		colorShow(i, v.d5, 'd5', 100);
+        		colorShow(i, v.d10, 'd10', 100);
+        		colorShow(i, v.dnow, 'dnow', 100);
         	}
         }
 	});
@@ -111,5 +110,16 @@ $(function() {
 		}
 	});
 	
+	function colorShow(index, data, field, digit) {
+		if(data < 0){
+			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, {'background':'url(\'resources/css/images/bg-rowGreen.gif\') repeat-x'});
+		}
+		else if(data > 0) {
+			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, {'background':'url(\'resources/css/images/bg-rowRed.gif\') repeat-x'});
+		}
+		else {
+			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, "");
+		}
+	}
 	
 });

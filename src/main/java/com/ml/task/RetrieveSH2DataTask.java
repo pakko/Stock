@@ -28,7 +28,8 @@ import java.util.Properties;
 public class RetrieveSH2DataTask implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(RetrieveSH2DataTask.class);
 
-	private static final String GBJG_Prefix = "http://webf10.gw.com.cn/SZ/B6/";
+	private static final String GBJG_Prefix1 = "http://webf10.gw.com.cn/";
+	private static final String GBJG_Prefix2 = "/B6/";
 	private static final String GBJG_Post = "_B6.html";
 	private static final String DefaultCharset = "UTF-8";
 	
@@ -61,7 +62,8 @@ public class RetrieveSH2DataTask implements Runnable {
 	}
 	
 	private void process(String stockCode) {
-		String retrieveUrl = GBJG_Prefix + stockCode.toUpperCase() + GBJG_Post;
+		String retrieveUrl = GBJG_Prefix1 + stockCode.toUpperCase().substring(0,2) + GBJG_Prefix2 + stockCode.toUpperCase() + GBJG_Post;
+		System.out.println(retrieveUrl);
 		Site site = Site.getInstance().setCharset(DefaultCharset)
 				.setUrl(retrieveUrl);
 		
@@ -85,7 +87,7 @@ public class RetrieveSH2DataTask implements Runnable {
 		MongoDB mongodb = new MongoDB(props);
 		
 		RetrieveSH2DataTask rdt = new RetrieveSH2DataTask(mongodb, null);
-		String stockCode = "sz002306";
+		String stockCode = "sh600832";
 		rdt.process(stockCode);
 	}
 

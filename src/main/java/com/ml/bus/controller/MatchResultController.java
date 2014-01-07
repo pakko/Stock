@@ -2,9 +2,10 @@ package com.ml.bus.controller;
 
 import hirondelle.date4j.DateTime;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -18,8 +19,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ml.bus.service.MatchResultService;
 import com.ml.bus.service.MemoryService;
+import com.ml.bus.service.TransferStockService;
 import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
+import com.ml.model.ScenarioResult;
 import com.ml.model.ShareHolder;
 import com.ml.util.DateUtil;
 
@@ -33,6 +36,9 @@ public class MatchResultController {
     
     @Autowired
     private MemoryService memoryService;
+    
+    @Autowired
+    private TransferStockService transferStockService;
     
     @RequestMapping(value = "", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public @ResponseBody List<Map<Object, Object>> getResult(
@@ -58,19 +64,51 @@ public class MatchResultController {
     			mrs = matchResultService.findAll();
     		}
     	}
-
+    	
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		String theDate = dateFormat.format(new Date());
+		
 		Map<String, String> stockCodes = memoryService.getMapCeStockCodes();
+		Map<String, Integer> stats = memoryService.getShStats();
 		
 		List<Map<Object, Object>> rows = new ArrayList<Map<Object, Object>>();
 		for(MatchResult mr: mrs){
 			Map<Object, Object> row = new HashMap<Object, Object>();
 			String stockCode = mr.getCode();
 			long date = mr.getDate();
+			DateTime beforeDate5 = DateUtil.getIntervalWorkingDay(date, 5, true);
+			DateTime beforeDate10 = DateUtil.getIntervalWorkingDay(date, 10, true);
+			
+			double d = 0;
+			double d5 = 0; 
+			double d10 = 0; 
+			double dnow = 0;
+			ScenarioResult stock = transferStockService.findByStockCodeAndDate(stockCode, date);
+			if(stock != null) {
+				d = stock.getNowPrice();
+			}
+			ScenarioResult stock5 = transferStockService.findByStockCodeAndDate(stockCode, DateUtil.getMilliseconds(beforeDate5));
+			if(stock5 != null) {
+				d5 = (stock5.getNowPrice() - d) / d;
+			}
+			ScenarioResult stock10 = transferStockService.findByStockCodeAndDate(stockCode, DateUtil.getMilliseconds(beforeDate10));
+			if(stock10 != null) {
+				d10 = (stock10.getNowPrice() - d) / d;
+			}
+			ScenarioResult stockNow = transferStockService.findByStockCodeAndDate(stockCode, DateUtil.getMilliseconds(theDate));
+			if(stockNow != null) {
+				dnow = (stockNow.getNowPrice() - d) / d;
+			}
+			
 			row.put("code", stockCode);
 			row.put("name", stockCodes.get(stockCode));
 			row.put("date", date);
 			row.put("strategy", mr.getStrategy());
 			row.put("ddx", getDDX(stockCode, date));
+			row.put("d5", d5);
+			row.put("d10", d10);
+			row.put("dnow", dnow);
+			row.put("sh", stats.get(stockCode));
         	rows.add(row);
 		}
 		
@@ -95,27 +133,7 @@ public class MatchResultController {
     	
 		Map<String, TreeSet<ShareHolder>> shareHolders = memoryService.getShareHolders();
 		
-		Map<String, Integer> stats = new HashMap<String, Integer>();
-		for(String key: shareHolders.keySet()) {
-			TreeSet<ShareHolder> ksh = shareHolders.get(key);
-			if(ksh.size() <= 0)
-				break;
-			
-			// 得到股东人数持续减少的次数
-			Iterator<ShareHolder> iter = ksh.iterator();
-			int index = 0;
-			double minSH = iter.next().getTotalHolders();
-			while(iter.hasNext()) {
-				ShareHolder sh = iter.next();
-				if(minSH <= sh.getTotalHolders()) {
-					index++;
-					minSH = sh.getTotalHolders();
-				}
-				else
-					break;
-			}
-			stats.put(key, index);
-		}
+		Map<String, Integer> stats = memoryService.getShStats();
 		Map<String, String> stockCodes = memoryService.getMapCeStockCodes();
 		List<Map<Object, Object>> rows = new ArrayList<Map<Object, Object>>();
 		for(String key: stats.keySet()){

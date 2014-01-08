@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 @CompoundIndexes({
-    @CompoundIndex(name = "stockIndex", def = "{'code': -1, 'date': -1}", unique = true)
+    @CompoundIndex(name = "ddzIndex", def = "{'code': -1, 'date': -1}", unique = true)
 })
 public class DdzStock {
 	private String code;

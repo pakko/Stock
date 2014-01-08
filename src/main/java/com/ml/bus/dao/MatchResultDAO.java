@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import com.ml.db.IBaseDB;
+import com.ml.model.DdxStock;
 import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
 import com.ml.model.ShareHolder;
@@ -53,6 +54,14 @@ public class MatchResultDAO {
 	
 	public List<ShareHolder> findAllSH() {
 		return baseDB.findAll(ShareHolder.class, Constants.ShareHolderCollectionName);
+	}
+	
+	public void saveDDx(DdxStock ddx) {
+		baseDB.save(ddx, Constants.DDXStockCollectionName);
+	}
+	
+	public List<DdxStock> findDDX(Query query) {
+		return baseDB.find(query, DdxStock.class, Constants.DDXStockCollectionName);
 	}
 
 }

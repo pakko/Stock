@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import com.ml.bus.dao.MatchResultDAO;
+import com.ml.model.DdxStock;
 import com.ml.model.DdzStock;
 import com.ml.model.MatchResult;
 import com.ml.util.DateUtil;
@@ -62,7 +63,26 @@ public class MatchResultService {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").gte(startDate).lte(endDate));
-		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
+		//query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
 		return matchResultDAO.findDDZ(query);
 	}
+	
+	public List<DdzStock> findDDZByDate(long startDate, long endDate) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("date").gte(startDate).lte(endDate));
+		//query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
+		return matchResultDAO.findDDZ(query);
+	}
+	
+	public List<DdxStock> findDDXByDate(long date) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("date").is(date));
+		return matchResultDAO.findDDX(query);
+	}
+	
+	public void saveDDx(DdxStock ddx) {
+		matchResultDAO.saveDDx(ddx);
+	}
+	
+	
 }

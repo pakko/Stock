@@ -31,11 +31,11 @@ $(function() {
 	   		{name:'name',index:'name', width:150, align: 'center'},
 	   		{name:'date',index:'date', width:150, align: 'center', formatter: 'date', formatoptions: {srcformat:'u',newformat:'Y-m-d'}},
 	   		{name:'strategy',index:'strategy', width:150, align: 'center'},
-	   		{name:'ddx',index:'ddx', width:100, align: 'center'},
-	   		{name:'d5',index:'d5', width:100, align: 'center'},
-	   		{name:'d10',index:'d10', width:100, align: 'center'},
-	   		{name:'dnow',index:'dnow', width:100, align: 'center'},
-	   		{name:'sh',index:'sh', width:100, align: 'center'}
+	   		{name:'ddx',index:'ddx', width:100, align: 'right', formatter: 'currency'},
+	   		{name:'d5',index:'d5', width:100, align: 'right', formatter: 'currency'},
+	   		{name:'d10',index:'d10', width:100, align: 'right', formatter: 'currency'},
+	   		{name:'dnow',index:'dnow', width:100, align: 'right', formatter: 'currency'},
+	   		{name:'sh',index:'sh', width:100, align: 'right', formatter: 'currency'}
 	   	],
 	   	rowNum:20,
 	   	rowList:[10,20,30],
@@ -78,14 +78,15 @@ $(function() {
         	if(data == null){
         		return;
         	}
+        	
         	var rowData = data.rows;
-        	for(var i=0; i<rowData.length;i++){
+        	/*for(var i=0; i<rowData.length;i++){
         		var v = rowData[i];
         		colorShow(i, v.ddx, 'ddx', 100);
         		colorShow(i, v.d5, 'd5', 100);
         		colorShow(i, v.d10, 'd10', 100);
         		colorShow(i, v.dnow, 'dnow', 100);
-        	}
+        	}*/
         }
 	});
 	$("#stockContent").jqGrid('navGrid','#pageCount',{edit:false,add:false,del:false,refresh:false});
@@ -112,13 +113,13 @@ $(function() {
 	
 	function colorShow(index, data, field, digit) {
 		if(data < 0){
-			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, {'background':'url(\'resources/css/images/bg-rowGreen.gif\') repeat-x'});
+			$("#stockContent").jqGrid('setCell', index+1, field, data, {'background':'url(\'resources/css/images/bg-rowGreen.gif\') repeat-x'});
 		}
 		else if(data > 0) {
-			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, {'background':'url(\'resources/css/images/bg-rowRed.gif\') repeat-x'});
+			$("#stockContent").jqGrid('setCell', index+1, field, data, {'background':'url(\'resources/css/images/bg-rowRed.gif\') repeat-x'});
 		}
 		else {
-			$("#stockContent").jqGrid('setCell', index+1, field, Math.round(data*digit)/digit, "");
+			$("#stockContent").jqGrid('setCell', index+1, field, data, "");
 		}
 	}
 	

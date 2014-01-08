@@ -49,9 +49,8 @@ public class MemoryService {
 		setStrategys("StrategyA,StrategyB,StrategyC,StrategyD");
 		stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		
-		List<ShareHolder> shs = matchResultDAO.findAllSH();
-		
 		//share holder
+		List<ShareHolder> shs = matchResultDAO.findAllSH();
 		shareHolders = new HashMap<String, TreeSet<ShareHolder>>(shs.size());
 		for(ShareHolder sh: shs) {
 			TreeSet<ShareHolder> tsh = shareHolders.get(sh.getCode());

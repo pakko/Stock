@@ -1,5 +1,7 @@
 package com.ml.strategy;
 
+import java.util.List;
+
 import hirondelle.date4j.DateTime;
 
 import org.springframework.data.domain.Sort;
@@ -22,6 +24,14 @@ public abstract class AbstractStrategy implements Strategy {
 		this.mongodb = mongodb;
 		this.isReal = isReal;
 	}
+	
+	protected List<ScenarioResult> getRangeQuerySRs(String stockCode, long startDate, long endDate) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("code").is(stockCode));
+		query.addCriteria(Criteria.where("date").lte(endDate).gte(startDate));
+		return mongodb.find(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
+	}
+	
 	
 	protected ScenarioResult getQuerySR(String stockCode, long date) {
 		Query query = new Query();

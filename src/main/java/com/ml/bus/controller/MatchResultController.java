@@ -97,6 +97,14 @@ public class MatchResultController {
 		int s5 = 0;
 		int s10 = 0;
 		int snow = 0;
+		int ta = 0;
+		int td = 0;
+		int tas5 = 0;
+		int tas10 = 0;
+		int tasnow = 0;
+		int tds5 = 0;
+		int tds10 = 0;
+		int tdsnow = 0;
 		for(MatchResult mr: mrs){
 			Map<Object, Object> row = new HashMap<Object, Object>();
 			String stockCode = mr.getCode();
@@ -118,6 +126,24 @@ public class MatchResultController {
 				s10++;
 			if(dp > 0)
 				snow++;
+			if(mr.getStrategy().equals("StrategyD")) {
+				td++;
+				if(d5 > 0)
+					tds5++;
+				if(d10 > 0)
+					tds10++;
+				if(dp > 0)
+					tdsnow++;
+			}
+			if(mr.getStrategy().equals("StrategyA")) {
+				ta++;
+				if(d5 > 0)
+					tas5++;
+				if(d10 > 0)
+					tas10++;
+				if(dp > 0)
+					tasnow++;
+			}
 			row.put("code", stockCode);
 			row.put("name", stockCodes.get(stockCode));
 			row.put("date", mrDate);
@@ -133,6 +159,16 @@ public class MatchResultController {
 		res.put("s5", s5);
 		res.put("s10", s10);
 		res.put("snow", snow);
+		int total = rows.size();
+		System.out.println("s5: " + s5 + ", per: " + s5 * 1.0/ total);
+		System.out.println("s10: " + s10 + ", per: " + s10 * 1.0/ total);
+		System.out.println("snow: " + snow + ", per: " + snow * 1.0/ total);
+		System.out.println("tas5: " + tas5 + ", per: " + tas5 * 1.0/ ta);
+		System.out.println("tas10: " + tas10 + ", per: " + tas10 * 1.0/ ta);
+		System.out.println("tasnow: " + tasnow + ", per: " + tasnow * 1.0/ ta);
+		System.out.println("tds5: " + tds5 + ", per: " + tds5 * 1.0/ td);
+		System.out.println("tds10: " + tds10 + ", per: " + tds10 * 1.0/ td);
+		System.out.println("tdsnow: " + tdsnow + ", per: " + tdsnow * 1.0/ td);
 		return rows;
     }
     

@@ -2,6 +2,7 @@ package com.ml.util;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,14 @@ public class DateUtil {
 			startDate = startDate.plusDays(1);
 		}
 		return dateList;
+	}
+	
+	public static DateTime getDaysBefore(long theDataSecs, int days) {
+		Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date(theDataSecs));
+        calendar.add(Calendar.DATE, -days);
+        Date date = calendar.getTime();
+        return getDateByMilliseconds(date.getTime());
 	}
 	
 	public static DateTime getIntervalWorkingDay(long startDateSecs, int interval, boolean isNext) {

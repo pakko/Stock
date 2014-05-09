@@ -19,11 +19,11 @@ public class Client {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		
-		String stockCode = "sh600021";
-		String theDate = "2013-10-15";
+		String stockCode = "sh600432";
+		String theDate = "2014-05-09";
 
         //选择并创建需要使用的策略对象
-        Strategy strategy = new StrategyD(mongodb, false);
+        Strategy strategy = new StrategyE(mongodb, false);
         //创建环境
         Context context = new Context(strategy);
         //计算

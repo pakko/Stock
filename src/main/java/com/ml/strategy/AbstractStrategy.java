@@ -29,6 +29,7 @@ public abstract class AbstractStrategy implements Strategy {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("code").is(stockCode));
 		query.addCriteria(Criteria.where("date").lte(endDate).gte(startDate));
+		query.with(new Sort(new Sort.Order(Direction.ASC, "date")));
 		return mongodb.find(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	

@@ -52,6 +52,13 @@ public class DateUtil {
 		return date.getMilliseconds(timeZone);
 	}
 	
+	public static String getStrByMilliseconds(long milliseconds) {
+		DateTime d = getDateByMilliseconds(milliseconds);
+		return d.format(FORMAT_PATTERN);
+	}
+	
+	
+	
 	public static <T> List<List<T>> splitList(List<T> list, int splitSize) {
 		int size = list.size();
 		int step = (int) Math.ceil(size / (splitSize * 1.0));

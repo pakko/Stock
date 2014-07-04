@@ -25,7 +25,7 @@ public class HttpClientCrawler implements Crawler {
 
     private HttpClientPool httpClientPool;
 
-    private int poolSize = 1;
+    private int poolSize = 10;
 
 
     private HttpClientPool getHttpClientPool(){

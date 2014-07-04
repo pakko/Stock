@@ -1,9 +1,7 @@
 package com.ml.strategy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import hirondelle.date4j.DateTime;
 
@@ -35,7 +33,6 @@ public class StrategyF extends AbstractStrategy {
 	
 	private int DAYS_OF_YEAR = 365;
 	private int MONTH_OF_YEAR = 12;
-	private int DAYS_OF_MONTH = 30;
 	
 	public int calculate(String stockCode, String theDate) {
 		int flag = 0;
@@ -159,6 +156,8 @@ public class StrategyF extends AbstractStrategy {
             int bigSunSize = 0;
             for(ScenarioResult sr: minToCurrentSRs) {
             	Stock stock = getQueryStock(stockCode, sr.getDate());
+            	if(stock == null)
+            		continue;
             	if(stock.getChangeRate() > 5.0) {
             		bigSunSize++;
             	}
@@ -188,7 +187,7 @@ public class StrategyF extends AbstractStrategy {
             flag = 13;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ], flyDate[ " +
 					DateUtil.getDateByMilliseconds(flySR.getDate()) + "]");
-			//saveMatchResult(stockCode, theDate, this.getClass().getSimpleName());
+			saveMatchResult(stockCode, DateUtil.getStrByMilliseconds(flySR.getDate()), this.getClass().getSimpleName());
 		} catch(Exception e) {
 			logger.error("Error on calculate, code[ " + stockCode + " ], " + e.getMessage());
 			e.printStackTrace();
@@ -202,13 +201,6 @@ public class StrategyF extends AbstractStrategy {
         DateTime beforeDate = DateUtil.getDaysBefore(theDateSecs, days);
         long beforeSecs = DateUtil.getMilliseconds(beforeDate);
         List<ScenarioResult> srs = getRangeQuerySRs(stockCode, beforeSecs, theDateSecs);
-        return srs;
-	}
-	
-	private List<ScenarioResult> getAfterRangeSR(String stockCode, long theDateSecs, int days) {
-        DateTime afterDate = DateUtil.getDaysAfter(theDateSecs, days);
-        long afterSecs = DateUtil.getMilliseconds(afterDate);
-        List<ScenarioResult> srs = getRangeQuerySRs(stockCode, theDateSecs, afterSecs);
         return srs;
 	}
 	

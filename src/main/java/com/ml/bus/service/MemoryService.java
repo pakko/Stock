@@ -46,7 +46,7 @@ public class MemoryService {
 		for(StockCode sc: ceStockCodes) {
 			mapCeStockCodes.put(sc.getCode(), sc.getName());
 		}
-		setStrategys("StrategyA,StrategyB,StrategyC,StrategyD");
+		setStrategys("StrategyA,StrategyB,StrategyC,StrategyD,StrategyF");
 		stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		
 		//share holder

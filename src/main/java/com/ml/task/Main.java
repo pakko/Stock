@@ -59,7 +59,7 @@ public class Main {
         	TaskResemble.transferStocks(beginDate, endDate, mongodb, stockCodes, isReal);
         }
         else if(cmd == 4) {
-        	String strategys = "StrategyA,StrategyB,StrategyC,StrategyD";
+        	String strategys = "StrategyA,StrategyB,StrategyC,StrategyD,StrategyF";
         	TaskResemble.calculate(beginDate, endDate, mongodb, stockCodes, strategys, false);
         } else if(cmd == 5) {
         	TaskResemble.retrieveRealStock(mongodb, stockCodes);

@@ -25,7 +25,7 @@ public class HttpClientCrawler implements Crawler {
 
     private HttpClientPool httpClientPool;
 
-    private int poolSize = 10;
+    private int poolSize = 20;
 
 
     private HttpClientPool getHttpClientPool(){
@@ -66,16 +66,22 @@ public class HttpClientCrawler implements Crawler {
                     String value = httpResponse.getEntity().getContentType().getValue();
                     charset = UrlUtils.getCharset(value);
                 }
-                return handleResponse(charset, httpResponse.getEntity().getContent());
+                ResultItems res = handleResponse(charset, httpResponse.getEntity().getContent());
+                httpGet.releaseConnection();
+                return res;
             } else {
                 logger.warn("code error " + statusCode + "\t" + site.getUrl());
             }
         } catch (Exception e) {
             logger.warn("download page " + site.getUrl() + " error", e);
-        }
+        } 
         return null;
     }
 
+    public void close() {
+    	httpClientPool.getConnectionManager().shutdown();
+    }
+    
     private ResultItems handleResponse(String charset, InputStream in) throws IOException {
         String content = IOUtils.toString(in, charset);
         if(content.equals(""))

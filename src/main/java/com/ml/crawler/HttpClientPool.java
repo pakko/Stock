@@ -23,7 +23,16 @@ public class HttpClientPool {
 
     private PoolingClientConnectionManager connectionManager;
 
-    public HttpClientPool(int poolSize) {
+    public PoolingClientConnectionManager getConnectionManager() {
+		return connectionManager;
+	}
+
+	public void setConnectionManager(
+			PoolingClientConnectionManager connectionManager) {
+		this.connectionManager = connectionManager;
+	}
+
+	public HttpClientPool(int poolSize) {
         this.setPoolSize(poolSize);
         SchemeRegistry schemeRegistry = new SchemeRegistry();
         schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));

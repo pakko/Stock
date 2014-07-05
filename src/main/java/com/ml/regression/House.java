@@ -1,6 +1,17 @@
 package com.ml.regression;
 
+import org.springframework.data.annotation.Id;
+
 public class House {
+	@Id
+	private String id;
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	private String name;
 	private String url;
 	private Double squarFeet;
 	private Double totalPrice;
@@ -8,9 +19,10 @@ public class House {
 	private Integer floor;
 	private Integer totalFloor;
 	private Double avgPrice;
-	public House(String url, Double squarFeet, Double totalPrice,
+	public House(String name, String url, Double squarFeet, Double totalPrice,
 			Integer layout, Integer floor, Integer totalFloor, Double avgPrice) {
 		super();
+		this.name = name;
 		this.url = url;
 		this.squarFeet = squarFeet;
 		this.totalPrice = totalPrice;
@@ -19,7 +31,14 @@ public class House {
 		this.totalFloor = totalFloor;
 		this.avgPrice = avgPrice;
 	}
-	public House() {}
+	public House(){}
+	
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
 	public String getUrl() {
 		return url;
 	}
@@ -64,12 +83,11 @@ public class House {
 	}
 	@Override
 	public String toString() {
-		return "House [url=" + url + ", squarFeet=" + squarFeet
-				+ ", totalPrice=" + totalPrice + ", layout=" + layout
-				+ ", floor=" + floor + ", totalFloor=" + totalFloor
+		return "House [name=" + name + ", url=" + url + ", squarFeet="
+				+ squarFeet + ", totalPrice=" + totalPrice + ", layout="
+				+ layout + ", floor=" + floor + ", totalFloor=" + totalFloor
 				+ ", avgPrice=" + avgPrice + "]";
 	}
-	
 	
 	
 }

@@ -2,10 +2,22 @@ package com.ml.regression;
 
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+
 public class Community {
 
+	@Id
+	private String id;
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
 	private String communityUrl;
 	private String houseUrl;
+	@Indexed(unique=true)
 	private String name;
 	private List<House> houses;
 	private Integer number;
@@ -13,11 +25,11 @@ public class Community {
 	private String minorLocation;
 	private Double avgPrice;
 	private Double upRate;
-	private Long date;
+	private Integer date;
 	
 	public Community(String communityUrl, String houseUrl, String name,
 			List<House> houses, Integer number, String majorLocation,
-			String minorLocation, Double avgPrice, Double upRate, Long date) {
+			String minorLocation, Double avgPrice, Double upRate, Integer date) {
 		super();
 		this.communityUrl = communityUrl;
 		this.houseUrl = houseUrl;
@@ -87,10 +99,10 @@ public class Community {
 	public void setUpRate(Double upRate) {
 		this.upRate = upRate;
 	}
-	public Long getDate() {
+	public Integer getDate() {
 		return date;
 	}
-	public void setDate(Long date) {
+	public void setDate(Integer date) {
 		this.date = date;
 	}
 	@Override

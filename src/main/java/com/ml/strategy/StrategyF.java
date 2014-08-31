@@ -139,7 +139,7 @@ public class StrategyF extends AbstractStrategy {
             	//6, 反转后,后一个月的均价不小于前一个月的均价
         		flag = 8;
                 if(startSR.getMa20() > endSR.getMa20()) {
-                	System.out.println("flag: " + flag + " - " + stockCode + ", flyDate[ " +
+                	System.out.println("flag: " + flag + " - " + stockCode + ", date[ " + theDate + " ], flyDate[ " +
         					DateUtil.getDateByMilliseconds(flySR.getDate()) + "]");
                     	return flag;
                 }
@@ -169,7 +169,7 @@ public class StrategyF extends AbstractStrategy {
             //5-3, 目前的换手率总量比反转前至少半年的换手率都明显大
             flag = 11;
             if(flySR.getHsl120() * 120 > totalHsl * 20){
-            	System.out.println("flag: " + flag + " - " + stockCode + ", flyDate[ " +
+            	System.out.println("flag: " + flag + " - " + stockCode + ", date[ " + theDate + " ], flyDate[ " +
 					DateUtil.getDateByMilliseconds(flySR.getDate()) + "]");
             	return flag;
             }
@@ -179,7 +179,7 @@ public class StrategyF extends AbstractStrategy {
             double upRate = (theDateSR.getNowPrice() - flySR.getNowPrice()) / flySR.getNowPrice();
             flag = 12;
             if(upRate > 0.8){
-            	System.out.println("flag: " + flag + " - " + stockCode + ", flyDate[ " +
+            	System.out.println("flag: " + flag + " - " + stockCode + ", date[ " + theDate + " ], flyDate[ " +
     					DateUtil.getDateByMilliseconds(flySR.getDate()) + "]");
                 	return flag;
             }
@@ -187,7 +187,7 @@ public class StrategyF extends AbstractStrategy {
             flag = 13;
 			logger.info("Match stock: code[ " + stockCode + " ], date[ " + theDate + " ], flyDate[ " +
 					DateUtil.getDateByMilliseconds(flySR.getDate()) + "]");
-			saveMatchResult(stockCode, DateUtil.getStrByMilliseconds(flySR.getDate()), this.getClass().getSimpleName());
+			saveMatchResult(stockCode, flySR.getDate(), theDateSecs, this.getClass().getSimpleName());
 		} catch(Exception e) {
 			logger.error("Error on calculate, code[ " + stockCode + " ], " + e.getMessage());
 			e.printStackTrace();

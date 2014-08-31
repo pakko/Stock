@@ -2,8 +2,6 @@ package com.ml.strategy;
 
 import java.util.List;
 
-import hirondelle.date4j.DateTime;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -14,7 +12,6 @@ import com.ml.model.MatchResult;
 import com.ml.model.ScenarioResult;
 import com.ml.model.Stock;
 import com.ml.util.Constants;
-import com.ml.util.DateUtil;
 
 public abstract class AbstractStrategy implements Strategy {
 	private MongoDB mongodb;
@@ -49,28 +46,8 @@ public abstract class AbstractStrategy implements Strategy {
 		return mongodb.findOne(query, ScenarioResult.class, Constants.ScenarioResultCollectionName);
 	}
 	
-	protected void saveMatchResult(String stockCode, String theDate, String strategy) {
-		long date = DateUtil.getMilliseconds(theDate);
-		DateTime beforeDate5 = DateUtil.getIntervalWorkingDay(date, 5, true);
-		DateTime beforeDate10 = DateUtil.getIntervalWorkingDay(date, 10, true);
-		
-		double d = 0;
-		double d5 = 0; 
-		double d10 = 0; 
-		ScenarioResult stock = getQuerySR(stockCode, date);
-		if(stock != null) {
-			d = stock.getNowPrice();
-		}
-		ScenarioResult stock5 = getQuerySR(stockCode, DateUtil.getMilliseconds(beforeDate5));
-		if(stock5 != null && d != 0) {
-			d5 = (stock5.getNowPrice() - d) / d;
-		}
-		ScenarioResult stock10 = getQuerySR(stockCode, DateUtil.getMilliseconds(beforeDate10));
-		if(stock10 != null && d != 0) {
-			d10 = (stock10.getNowPrice() - d) / d;
-		}
-		
-		MatchResult matchResult = new MatchResult(stockCode, date, strategy, d5, d10, d);
+	protected void saveMatchResult(String stockCode, long theDate, long flyDate, String strategy) {
+		MatchResult matchResult = new MatchResult(stockCode, theDate, flyDate, strategy, 0.0, 0.0, 0.0);
 		mongodb.save(matchResult, Constants.MatchResultCollectionName);
 	}
 	

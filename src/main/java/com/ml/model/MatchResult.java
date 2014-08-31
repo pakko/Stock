@@ -1,5 +1,6 @@
 package com.ml.model;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -9,17 +10,23 @@ import org.springframework.data.mongodb.core.mapping.Document;
     @CompoundIndex(name = "matchIndex", def = "{'code': -1, 'date': -1}", unique = true, dropDups = true)
 })
 public class MatchResult {
+	@Id
+	private String id;
 	private String code;
 	private long date;
+	private long flyDate;
 	private String strategy;
 	private Double d5;
 	private Double d10;
 	private Double dnow;
-	public MatchResult(String code, long date, String strategy, Double d5,
+	
+	public MatchResult() {}
+	public MatchResult(String code, long date, long flyDate, String strategy, Double d5,
 			Double d10, Double dnow) {
 		super();
 		this.code = code;
 		this.date = date;
+		this.flyDate = flyDate;
 		this.strategy = strategy;
 		this.d5 = d5;
 		this.d10 = d10;
@@ -61,12 +68,19 @@ public class MatchResult {
 	public void setDnow(Double dnow) {
 		this.dnow = dnow;
 	}
+	public long getFlyDate() {
+		return flyDate;
+	}
+	public void setFlyDate(long flyDate) {
+		this.flyDate = flyDate;
+	}
 	@Override
 	public String toString() {
-		return "MatchResult [code=" + code + ", date=" + date + ", strategy="
-				+ strategy + ", d5=" + d5 + ", d10=" + d10 + ", dnow=" + dnow
-				+ "]";
+		return "MatchResult [code=" + code + ", date=" + date + ", flyDate="
+				+ flyDate + ", strategy=" + strategy + ", d5=" + d5 + ", d10="
+				+ d10 + ", dnow=" + dnow + "]";
 	}
+	
 	
 	
 	

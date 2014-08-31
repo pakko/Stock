@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.ml.db.MongoDB;
 import com.ml.util.Constants;
+import com.ml.util.DateUtil;
 
 public class Client {
 
@@ -25,7 +26,7 @@ public class Client {
 		props.load(new FileInputStream(confFile));
 		MongoDB mongodb = new MongoDB(props);
 		
-		String stockCode = "sh600432";
+		String stockCode = "sz002542";
 		String theDate = "2014-05-09";
 
         //选择并创建需要使用的策略对象
@@ -33,9 +34,13 @@ public class Client {
         //创建环境
         Context context = new Context(strategy);
         //计算
-        //context.calculate(stockCode, theDate);
+        List<String> dates = DateUtil.getWorkingDays("2014-01-01", "2014-08-30");
+        for(String date: dates) {
+        	context.calculate(stockCode, date);
+        }
         
-        List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
+        
+        /*List<String> stockCodes = FileUtils.readLines(new File(Constants.CorpCodesFile));
 		System.out.println("Corp code size: " + stockCodes.size());
 		Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
         for (String code : stockCodes) {
@@ -46,7 +51,7 @@ public class Client {
 			}
 			stats.put(res, tmp + 1);
 		}
-        System.out.println("stats: " + stats);
+        System.out.println("stats: " + stats);*/
     }
 
 }

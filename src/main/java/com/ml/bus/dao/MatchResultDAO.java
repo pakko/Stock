@@ -40,7 +40,7 @@ public class MatchResultDAO {
 		baseDB.save(mr, Constants.MatchResultCollectionName);
 	}
 
-	public Stock findOne(Query query) {
+	public MatchResult findOne(Query query) {
 		return baseDB.findOne(query, MatchResult.class, Constants.MatchResultCollectionName);
 	}
 

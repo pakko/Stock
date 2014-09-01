@@ -47,7 +47,7 @@ public abstract class AbstractStrategy implements Strategy {
 	}
 	
 	protected void saveMatchResult(String stockCode, long theDate, long flyDate, String strategy) {
-		MatchResult matchResult = new MatchResult(stockCode, theDate, flyDate, strategy, 0.0, 0.0, 0.0);
+		MatchResult matchResult = new MatchResult(stockCode, theDate, flyDate, strategy, 0.0, 0.0, 0.0, 0.0, 0.0);
 		mongodb.save(matchResult, Constants.MatchResultCollectionName);
 	}
 	

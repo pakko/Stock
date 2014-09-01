@@ -1,5 +1,6 @@
 package com.ml.regression;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -196,7 +198,38 @@ public class Regression {
 		
 		
 	}
+	
+	private static final String SEPARATE = ",";
+	public void extractDataToFile() throws IOException {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("houses").exists(true));
+		//query.addCriteria(Criteria.where("name").is("东方城市花园二期"));
+		List<Community> communities = mongo.find(query, Community.class, "community");
+		System.out.println(communities.size());
+		
+		StringBuffer sb = new StringBuffer();
+		for(Community c: communities) {
+			for(House h: c.getHouses()) {
+				if(h.getSquarFeet() > 150 
+						|| h.getSquarFeet() < 30
+						|| h.getTotalPrice() > 800)
+					continue;
+				sb.append(h.getSquarFeet() + SEPARATE + 
+						h.getLayout() + SEPARATE + 
+						convert(h.getFloor()*1.0/h.getTotalFloor()) + SEPARATE + 
+						h.getTotalPrice() + "\n");
+			}
+			//sb.append("-----------\n");
+		}
+		FileUtils.writeStringToFile(new File("c:\\house2.txt"), sb.toString());
+	}
 
+	private static double convert(double value) {
+		long l1 = Math.round(value * 100);
+		double ret = l1 / 100.0;
+		return ret;
+	}
+	
 	private int getCommunityPage(String content) {
 		Document doc = Jsoup.parse(content);
         Elements trs = doc.select("#wrap ul.mt15 li.pages");
@@ -226,7 +259,7 @@ public class Regression {
 		Regression r = new Regression();
 		r.init();
 		//r.crawlCommunity("25_1644");
-		r.crawlHouses(null);
-		
+		//r.crawlHouses(null);
+		r.extractDataToFile();
     }
 }

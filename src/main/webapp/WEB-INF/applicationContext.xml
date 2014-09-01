@@ -72,8 +72,8 @@
     	class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
        <property name="triggers">
           <list>
-             <ref local="cronAutoHistoryCalculate"/>
-             <ref local="cronAutoRealCalculate"/>
+             <!--<ref local="cronAutoHistoryCalculate"/>
+             <ref local="cronAutoRealCalculate"/>-->
           </list>
        </property>
        <property name="quartzProperties">

@@ -86,6 +86,8 @@ public class MatchResultController {
 			long mrDate = mr.getDate();
 			double d5 = mr.getD5();
 			double d10 = mr.getD10();
+			double d20 = (mr.getD20() != null) ? mr.getD20() : 0;
+			double d30 = (mr.getD30() != null) ? mr.getD30() : 0;
 			double dnow = mr.getDnow();
 			
 			row.put("code", stockCode);
@@ -101,6 +103,8 @@ public class MatchResultController {
 			row.put("ddx", ddxMap.get(stockCode));
 			row.put("d5", d5);
 			row.put("d10", d10);
+			row.put("d20", d20);
+			row.put("d30", d30);
 			row.put("dnow", dnow);
 			row.put("sh", stats.get(stockCode));
         	rows.add(row);

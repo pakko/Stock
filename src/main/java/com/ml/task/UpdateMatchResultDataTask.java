@@ -41,7 +41,7 @@ public class UpdateMatchResultDataTask implements Runnable {
 	private List<MatchResult> getMatchResult() {
 		Query query = new Query();
 		//query.addCriteria(Criteria.where("code").is("sh600432"));
-		query.addCriteria(Criteria.where("strategy").is("StrategyF"));
+		query.addCriteria(Criteria.where("strategy").is("StrategyC"));
 		return mongodb.find(query, MatchResult.class, Constants.MatchResultCollectionName);
 		//return mongodb.findAll(MatchResult.class, Constants.MatchResultCollectionName);
 	}
@@ -61,43 +61,62 @@ public class UpdateMatchResultDataTask implements Runnable {
     	List<MatchResult> mrs = getMatchResult();
     	
 		for(MatchResult mr: mrs){
-			mongodb.delete(mr, Constants.MatchResultCollectionName);
-			
-			double d5 = 0;
-			double d10 = 0;
-			double dnow = 0;
-			
-			String stockCode = mr.getCode();
-			long mrDate;
-			if(mr.getStrategy().equals("StrategyF")) {
-				mrDate = mr.getFlyDate();
+			try{
+				mongodb.delete(mr, Constants.MatchResultCollectionName);
+				
+				double d5 = 0;
+				double d10 = 0;
+				double d20 = 0;
+				double d30 = 0;
+				double dnow = 0;
+				
+				String stockCode = mr.getCode();
+				long mrDate;
+				if(mr.getStrategy().equals("StrategyF")) {
+					mrDate = mr.getFlyDate();
+				}
+				else {
+					mrDate = mr.getDate();
+				}
+				DateTime afterDate5 = DateUtil.getIntervalWorkingDay(mrDate, 5, true);
+				DateTime afterDate10 = DateUtil.getIntervalWorkingDay(mrDate, 10, true);
+				DateTime afterDate20 = DateUtil.getIntervalWorkingDay(mrDate, 20, true);
+				DateTime afterDate30 = DateUtil.getIntervalWorkingDay(mrDate, 30, true);
+				
+				ScenarioResult theSR = getSC(stockCode, mrDate);
+				ScenarioResult stockAfter5 = getSC(stockCode, DateUtil.getMilliseconds(afterDate5));
+				ScenarioResult stockAfter10 = getSC(stockCode, DateUtil.getMilliseconds(afterDate10));
+				ScenarioResult stockAfter20 = getSC(stockCode, DateUtil.getMilliseconds(afterDate20));
+				ScenarioResult stockAfter30 = getSC(stockCode, DateUtil.getMilliseconds(afterDate30));
+				ScenarioResult stockNow = getSC(stockCode, date);
+				
+				double price = theSR.getNowPrice();
+				
+				if(stockAfter5 != null) {
+					d5 = (stockAfter5.getNowPrice() - price) / (price + ECONS);
+				}
+				if(stockAfter10 != null) {
+					d10 = (stockAfter10.getNowPrice() - price) / (price + ECONS);
+				}
+				if(stockAfter20 != null) {
+					d20 = (stockAfter20.getNowPrice() - price) / (price + ECONS);
+				}
+				if(stockAfter30 != null) {
+					d30 = (stockAfter30.getNowPrice() - price) / (price + ECONS);
+				}
+				if(stockNow != null) {
+					dnow = (stockNow.getNowPrice() - price) / (price + ECONS);
+				}
+				mr.setD5(d5);
+				mr.setD10(d10);
+				mr.setD20(d20);
+				mr.setD30(d30);
+				mr.setDnow(dnow);
+				mongodb.save(mr, Constants.MatchResultCollectionName);
 			}
-			else {
-				mrDate = mr.getDate();
+			catch(Exception e) {
+				System.out.println(mr.getCode() + ":" + e.getMessage());
 			}
-			DateTime afterDate5 = DateUtil.getIntervalWorkingDay(mrDate, 5, true);
-			DateTime afterDate10 = DateUtil.getIntervalWorkingDay(mrDate, 10, true);
-			
-			ScenarioResult theSR = getSC(stockCode, mrDate);
-			ScenarioResult stockAfter5 = getSC(stockCode, DateUtil.getMilliseconds(afterDate5));
-			ScenarioResult stockAfter10 = getSC(stockCode, DateUtil.getMilliseconds(afterDate10));
-			ScenarioResult stockNow = getSC(stockCode, date);
-			
-			double price = theSR.getNowPrice();
-			
-			if(stockAfter5 != null) {
-				d5 = (stockAfter5.getNowPrice() - price) / (price + ECONS);
-			}
-			if(stockAfter10 != null) {
-				d10 = (stockAfter10.getNowPrice() - price) / (price + ECONS);
-			}
-			if(stockNow != null) {
-				dnow = (stockNow.getNowPrice() - price) / (price + ECONS);
-			}
-			mr.setD5(d5);
-			mr.setD10(d10);
-			mr.setDnow(dnow);
-			mongodb.save(mr, Constants.MatchResultCollectionName);
 		}
 	}
 	
